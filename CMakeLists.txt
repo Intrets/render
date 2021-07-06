@@ -1,34 +1,48 @@
-include("${PROJECT_SOURCE_DIR}/cmake/MakeModule.cmake")
+cmake_minimum_required(VERSION 3.20)
+
+include("./cmake/MakeModule.cmake")
 
 set(MODULE_NAME render)
 
-set(MODULE_FILES
-	Enums
-	Colors
-	BufferWrappers
-	loaders/ShaderLoader
-	loaders/ModelLoader
-	loaders/TextureLoader
-	loaders/vboindexer
-	BlitRenderer
-	Renderer
-	UIBackgroundRenderer
-	TextRenderer
-	DebugRenderer
-	BlitRendererArray
-	infos/RenderInfo
-	infos/TextRenderInfo
-	infos/UIRenderInfo
-	infos/CameraInfo
-	infos/TileRenderInfo
-	infos/BlitArrayRenderInfo
-	infos/BlitRenderInfo
-	infos/DebugRenderInfo
-	infos/HighlightRenderInfo
-	Fonts
-	textures/BlockIDTextures
-	GLStateWrapper
-	HighlightRenderer
+project(${MODULE_NAME})
+
+make_module(
+	MODULE_NAME ${MODULE_NAME}
+	MODULE_FILES
+		Enums
+		Colors
+		BufferWrappers
+		loaders/ShaderLoader
+		loaders/ModelLoader
+		loaders/TextureLoader
+		loaders/vboindexer
+		BlitRenderer
+		Renderer
+		UIBackgroundRenderer
+		TextRenderer
+		DebugRenderer
+		BlitRendererArray
+		infos/RenderInfo
+		infos/TextRenderInfo
+		infos/UIRenderInfo
+		infos/CameraInfo
+		infos/TileRenderInfo
+		infos/BlitArrayRenderInfo
+		infos/BlitRenderInfo
+		infos/DebugRenderInfo
+		infos/HighlightRenderInfo
+		Fonts
+		textures/BlockIDTextures
+		GLStateWrapper
+		HighlightRenderer
+	CXX_STANDARD 20
+	REQUIRED_LIBS
+		WGLM
+		GLEW
+		GLI
+		GLFW3
+		mem
+		misc
 )
 
 set(SHADER_FILES
@@ -49,18 +63,5 @@ foreach(SHADER ${SHADER_FILES})
 	file(WRITE "${FULL_PATH}.vert.inc" "static const char* ${SHADER}_vert = R\"(${VERTEX_SHADER})\";\n")
 endforeach()
 
-make_module(${MODULE_NAME} "${MODULE_FILES}")
-
 target_include_directories(${MODULE_NAME} PRIVATE "./shaders")
 
-target_link_libraries(${MODULE_NAME} PUBLIC
-	WGLM
-	GLEW
-	misc
-)
-
-target_link_libraries(${MODULE_NAME} PRIVATE
-	GLI
-	GLFW3
-	mem
-)
