@@ -4,7 +4,7 @@ include("./cmake/MakeModule.cmake")
 
 set(MODULE_NAME render)
 
-project(${MODULE_NAME})
+project(${MODULE_NAME} LANGUAGES CXX)
 
 make_module(
 	MODULE_NAME ${MODULE_NAME}
@@ -17,12 +17,10 @@ make_module(
 		loaders/TextureLoader
 		loaders/vboindexer
 		BlitRenderer
-		Renderer
 		UIBackgroundRenderer
 		TextRenderer
 		DebugRenderer
 		BlitRendererArray
-		infos/RenderInfo
 		infos/TextRenderInfo
 		infos/UIRenderInfo
 		infos/CameraInfo
@@ -31,6 +29,7 @@ make_module(
 		infos/BlitRenderInfo
 		infos/DebugRenderInfo
 		infos/HighlightRenderInfo
+		infos/proxy/UIInfos
 		Fonts
 		textures/BlockIDTextures
 		GLStateWrapper

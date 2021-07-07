@@ -1,6 +1,5 @@
 #include "UIBackgroundRenderer.h"
 
-#include "infos/RenderInfo.h"
 #include "infos/CameraInfo.h"
 
 #include <mem/Global.h>
