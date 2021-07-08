@@ -7,18 +7,23 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <string>
+#include <vector>
+#include <numeric>
 
 #include "loaders/vboindexer.h"
+
+#include <misc/Num.h>
 
 namespace render
 {
 	bool loadOBJ(
-		std::string& path,
+		std::string_view path_,
 		std::vector<glm::vec3>& out_vertices,
 		std::vector<glm::vec2>& out_uvs,
 		std::vector<glm::vec3>& out_normals
 	) {
+		std::string path{ path_ };
+
 		printf("Loading OBJ file %s...\n", path.c_str());
 
 		std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
@@ -110,43 +115,40 @@ namespace render
 		return true;
 	}
 
-	bool loadModel(std::string& path,
-				   GLuint& vertexbuffer,
-				   GLuint& uvbuffer,
-				   GLuint& normalbuffer,
-				   GLuint& indexbuffer,
-				   int32_t& indexsize) {
-		std::vector< glm::vec3 > vertices;
-		std::vector< glm::vec2 > uvs;
-		std::vector< glm::vec3 > normals; // Won't be used at the moment.
+	bwo::Model loadModel(std::string_view path) {
+		bwo::Model model;
+
+		std::vector<glm::vec3> vertices;
+		std::vector<glm::vec2> uvs;
+		std::vector<glm::vec3> normals; // Won't be used at the moment.
 
 		loadOBJ(path, vertices, uvs, normals);
 
-		std::vector< unsigned short> out_indices;
-		std::vector< glm::vec3 > out_vertices;
-		std::vector< glm::vec2 > out_uvs;
-		std::vector< glm::vec3 > out_normals; // Won't be used at the moment.
+		std::vector<uint16_t> indices;
+		indices.resize(vertices.size());
+		std::iota(indices.begin(), indices.end(), 0_u16);
 
-		indexVBO(vertices, uvs, normals, out_indices, out_vertices, out_uvs, out_normals);
+		model.model.set(vertices);
+		model.uv.set(uvs);
+		model.normals.set(normals);
+		model.indices.set(indices);
 
-		glGenBuffers(1, &vertexbuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glBufferData(GL_ARRAY_BUFFER, out_vertices.size() * sizeof(glm::vec3), &out_vertices[0], GL_STATIC_DRAW);
+		model.indexSize = static_cast<decltype(model.indexSize)>(indices.size());
 
-		glGenBuffers(1, &uvbuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-		glBufferData(GL_ARRAY_BUFFER, out_uvs.size() * sizeof(glm::vec2), &out_uvs[0], GL_STATIC_DRAW);
+		//std::vector<uint16_t> out_indices;
+		//std::vector<glm::vec3> out_vertices;
+		//std::vector<glm::vec2> out_uvs;
+		//std::vector<glm::vec3> out_normals; // Won't be used at the moment.
 
-		glGenBuffers(1, &normalbuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-		glBufferData(GL_ARRAY_BUFFER, out_normals.size() * sizeof(glm::vec3), &out_normals[0], GL_STATIC_DRAW);
+		//indexVBO(vertices, uvs, normals, out_indices, out_vertices, out_uvs, out_normals);
 
-		indexsize = static_cast<int>(out_indices.size());
+		//model.model.set(out_vertices);
+		//model.uv.set(out_uvs);
+		//model.normals.set(out_normals);
+		//model.indices.set(out_indices);
 
-		glGenBuffers(1, &indexbuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexbuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexsize * sizeof(unsigned short), &out_indices[0], GL_STATIC_DRAW);
+		//model.indexSize = static_cast<decltype(model.indexSize)>(out_indices.size());
 
-		return true;
+		return model;
 	}
 }

@@ -82,6 +82,8 @@ namespace ogs
 	Configuration DebugPointConfiguration();
 	Configuration DebugLineConfiguration();
 	Configuration HighlightConfiguration();
+	Configuration GeneralConfiguration();
+
 
 	class State
 	{

@@ -213,6 +213,17 @@ namespace ogs
 		};
 	}
 
+	Configuration GeneralConfiguration() {
+		return {
+			BLEND::ENABLED,
+			BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
+			DEPTH_TEST::ENABLED,
+			DEPTH_FUNC::LESS,
+			POLYGON_MODE::FILL,
+			0.0f,
+		};
+	}
+
 	Configuration::Configuration(BLEND blend_, BLEND_FUNC blendFunc_, DEPTH_TEST depthTest_, DEPTH_FUNC depthFunc_, POLYGON_MODE polygonMode_, float pointSize_) :
 		blend(blend_),
 		blendFunc(blendFunc_),

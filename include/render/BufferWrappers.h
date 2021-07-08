@@ -51,7 +51,29 @@ namespace render
 
 			void bind(GLenum location);
 
-			NO_COPY_MOVE(ArrayBuffer);
+			ArrayBuffer(ArrayBuffer<T>&& other) {
+				this->usageHint = other.usageHint;
+				this->ID = other.ID;
+
+				other.ID = 0;
+			}
+
+			ArrayBuffer& operator=(ArrayBuffer<T>&& other) {
+				if (this != &other) {
+					if (this->ID != 0) {
+						glDeleteBuffers(1, &this->ID);
+					}
+
+					this->usageHint = other.usageHint;
+					this->ID = other.ID;
+
+					other.ID = 0;
+				}
+				return *this;
+			}
+
+			NO_COPY(ArrayBuffer);
+
 		};
 
 		class Texture2DArray
@@ -239,6 +261,18 @@ namespace render
 				assert(VAO_impl::Stride == VAO_impl::Offset);
 			};
 		};
+
+		struct Indices
+		{
+			using GroupType = uint16_t;
+
+			static void apply(ArrayBuffer<GroupType>& buffer) {
+				std::cout << "binding element array buffer\n";
+				buffer.bind(GL_ELEMENT_ARRAY_BUFFER);
+			};
+		};
+
+
 
 		template<class Arg, class ...Args>
 		void TFor0() {
@@ -469,6 +503,16 @@ namespace render
 			Uniform1i(std::string name, Program const& program);
 			~Uniform1i() = default;
 		};
+
+		struct Model
+		{
+			bwo::ArrayBuffer<glm::vec3> model{ bwo::BufferHint::STATIC_DRAW };
+			bwo::ArrayBuffer<glm::vec2> uv{ bwo::BufferHint::STATIC_DRAW };
+			bwo::ArrayBuffer<glm::vec3> normals{ bwo::BufferHint::STATIC_DRAW };
+			bwo::ArrayBuffer<uint16_t> indices{ bwo::BufferHint::STATIC_DRAW };
+			int32_t indexSize;
+		};
+
 
 		template<class T>
 		inline ArrayBuffer<T>::ArrayBuffer(BufferHint hint) {
