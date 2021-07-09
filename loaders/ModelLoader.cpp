@@ -124,30 +124,30 @@ namespace render
 
 		loadOBJ(path, vertices, uvs, normals);
 
-		std::vector<uint16_t> indices;
-		indices.resize(vertices.size());
-		std::iota(indices.begin(), indices.end(), 0_u16);
+		//std::vector<uint16_t> indices;
+		//indices.resize(vertices.size());
+		//std::iota(indices.begin(), indices.end(), 0_u16);
 
-		model.model.set(vertices);
-		model.uv.set(uvs);
-		model.normals.set(normals);
-		model.indices.set(indices);
+		//model.model.set(vertices);
+		//model.uv.set(uvs);
+		//model.normals.set(normals);
+		//model.indices.set(indices);
 
-		model.indexSize = static_cast<decltype(model.indexSize)>(indices.size());
+		//model.indexSize = static_cast<decltype(model.indexSize)>(indices.size());
 
-		//std::vector<uint16_t> out_indices;
-		//std::vector<glm::vec3> out_vertices;
-		//std::vector<glm::vec2> out_uvs;
-		//std::vector<glm::vec3> out_normals; // Won't be used at the moment.
+		std::vector<uint16_t> out_indices;
+		std::vector<glm::vec3> out_vertices;
+		std::vector<glm::vec2> out_uvs;
+		std::vector<glm::vec3> out_normals; // Won't be used at the moment.
 
-		//indexVBO(vertices, uvs, normals, out_indices, out_vertices, out_uvs, out_normals);
+		indexVBO(vertices, uvs, normals, out_indices, out_vertices, out_uvs, out_normals);
 
-		//model.model.set(out_vertices);
-		//model.uv.set(out_uvs);
-		//model.normals.set(out_normals);
-		//model.indices.set(out_indices);
+		model.model.set(out_vertices);
+		model.uv.set(out_uvs);
+		model.normals.set(out_normals);
+		model.indices.set(out_indices);
 
-		//model.indexSize = static_cast<decltype(model.indexSize)>(out_indices.size());
+		model.indexSize = static_cast<decltype(model.indexSize)>(out_indices.size());
 
 		return model;
 	}
