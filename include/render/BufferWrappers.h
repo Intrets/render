@@ -40,8 +40,9 @@ namespace render
 			GLenum usageHint;
 
 		public:
-			GLuint ID;
+			GLuint ID = 0;
 
+			ArrayBuffer() = default;
 			ArrayBuffer(BufferHint hint);
 			~ArrayBuffer();
 
@@ -56,6 +57,7 @@ namespace render
 				this->ID = other.ID;
 
 				other.ID = 0;
+				other.usageHint = {};
 			}
 
 			ArrayBuffer& operator=(ArrayBuffer<T>&& other) {
@@ -68,6 +70,7 @@ namespace render
 					this->ID = other.ID;
 
 					other.ID = 0;
+					other.usageHint = {};
 				}
 				return *this;
 			}
@@ -294,7 +297,7 @@ namespace render
 		class VertexArrayObject
 		{
 		public:
-			GLuint ID;
+			GLuint ID = 0;
 
 			void bind() {
 				glBindVertexArray(this->ID);
@@ -319,22 +322,57 @@ namespace render
 				glBindVertexArray(0);
 			};
 
-			VertexArrayObject() = delete;
+			VertexArrayObject() = default;
+			VertexArrayObject(VertexArrayObject&& other) {
+				this->ID = other.ID;
+				other.ID = 0;
+			}
+			VertexArrayObject& operator=(VertexArrayObject&& other) {
+				if (this != &other) {
+					if (this->ID != 0) {
+						glDeleteVertexArrays(1, &this->ID);
+					}
+					this->ID = other.ID;
+					other.ID = 0;
+				}
+				return *this;
+			}
+			NO_COPY(VertexArrayObject);
 			~VertexArrayObject() {
 				glDeleteVertexArrays(1, &this->ID);
 			};
-
-			NO_COPY_MOVE(VertexArrayObject);
 		};
 
 		class FrameBuffer
 		{
 		public:
-			GLuint ID;
-			glm::ivec2 size;
+			GLuint ID = 0;
+			glm::ivec2 size{};
 
 			FrameBuffer(GLFWwindow* window);
 			FrameBuffer();
+			FrameBuffer(FrameBuffer&& other) {
+				this->ID = other.ID;
+				this->size = other.size;
+
+				other.ID = 0;
+				other.size = { 0,0 };
+			}
+			FrameBuffer& operator=(FrameBuffer&& other) {
+				if (this != &other) {
+					if (this->ID != 0) {
+						glDeleteFramebuffers(1, &this->ID);
+					}
+
+					this->ID = other.ID;
+					this->size = other.size;
+
+					other.ID = 0;
+					other.size = { 0,0 };
+				}
+				return *this;
+			}
+			NO_COPY(FrameBuffer);
 			~FrameBuffer();
 
 			void bindTextureColor(int32_t attachmentNumber, bwo::Texture2D const& texture, GLint mipmap);
@@ -344,8 +382,6 @@ namespace render
 
 			void clear(glm::vec4 color, bool depth);
 			void clearDepth();
-
-			NO_COPY_MOVE(FrameBuffer);
 		};
 
 		class Program
@@ -363,9 +399,9 @@ namespace render
 			friend class UniformTexture2D;
 			friend class UniformTexture2DArray;
 
-			GLuint ID;
+			GLuint ID = 0;
 
-			std::string description;
+			std::string description{};
 
 		public:
 			static std::unordered_map<int32_t, Program*> refs;
@@ -374,19 +410,38 @@ namespace render
 
 			void use();
 
-			Program(char const* vert_raw, char const* frag_raw, std::string const& description);
-			~Program();
-
-			NO_COPY_MOVE(Program);
-
-		private:
 			Program() = default;
+			Program(char const* vert_raw, char const* frag_raw, std::string const& description);
+			Program(Program&& other) {
+				this->ID = other.ID;
+				this->description = other.description;
+
+				other.ID = 0;
+				other.description = {};
+			};
+			Program& operator=(Program&& other) {
+				if (this != &other) {
+					if (this->ID != 0) {
+						Program::refs.erase(this->ID);
+						glDeleteProgram(this->ID);
+					}
+					this->ID = other.ID;
+					this->description = other.description;
+
+					other.ID = 0;
+					other.description = {};
+				}
+				return *this;
+			};
+
+			NO_COPY(Program);
+			~Program();
 		};
 
 		class Uniform2iv
 		{
 		private:
-			GLuint location;
+			GLuint location = 0;
 
 		public:
 			void set(glm::ivec2 vec);
@@ -394,40 +449,43 @@ namespace render
 
 			Uniform2iv() = default;
 			Uniform2iv(std::string name, Program const& program);
+			DEFAULT_COPY_MOVE(Uniform2iv);
 			~Uniform2iv() = default;
 		};
 
 		class Uniform2fv
 		{
 		private:
-			GLuint location;
+			GLuint location = 0;
 
 		public:
 			void set(glm::vec2 vec);
 
 			Uniform2fv() = default;
 			Uniform2fv(std::string name, Program const& program);
+			DEFAULT_COPY_MOVE(Uniform2fv);
 			~Uniform2fv() = default;
 		};
 
 		class UniformMatrix4fv
 		{
 		private:
-			GLuint location;
+			GLuint location = 0;
 
 		public:
 			void set(glm::mat4 const& mat);
 
 			UniformMatrix4fv() = default;
 			UniformMatrix4fv(std::string name, Program const& program);
+			DEFAULT_COPY_MOVE(UniformMatrix4fv);
 			~UniformMatrix4fv() = default;
 		};
 
 		class UniformTexture2D
 		{
 		private:
-			int32_t unit;
-			GLuint location;
+			int32_t unit = 0;
+			GLuint location = 0;
 
 		public:
 			void set(GLuint texture);
@@ -435,72 +493,78 @@ namespace render
 
 			UniformTexture2D() = default;
 			UniformTexture2D(std::string name, Program const& program, int32_t unit);
+			DEFAULT_COPY_MOVE(UniformTexture2D);
 			~UniformTexture2D() = default;
 		};
 
 		class Uniform3fv
 		{
 		private:
-			GLuint location;
+			GLuint location = 0;
 
 		public:
 			void set(glm::vec3 vec);
 
 			Uniform3fv() = default;
 			Uniform3fv(std::string name, Program const& program);
+			DEFAULT_COPY_MOVE(Uniform3fv);
 			~Uniform3fv() = default;
 		};
 
 		class Uniform4fv
 		{
 		private:
-			GLuint location;
+			GLuint location = 0;
 
 		public:
 			void set(glm::vec4 vec);
 
 			Uniform4fv() = default;
 			Uniform4fv(std::string name, Program const& program);
+			DEFAULT_COPY_MOVE(Uniform4fv);
 			~Uniform4fv() = default;
 		};
 
 		class Uniform1f
 		{
 		private:
-			GLuint location;
+			GLuint location = 0;
 
 		public:
 			void set(float f);
 
 			Uniform1f() = default;
 			Uniform1f(std::string name, Program const& program);
+			DEFAULT_COPY_MOVE(Uniform1f);
 			~Uniform1f() = default;
 		};
 
 		class UniformTexture2DArray
 		{
 		private:
-			GLuint location;
-			int32_t unit;
+			GLuint location = 0;
+			int32_t unit = 0;
 
 		public:
 			void set(Texture2DArray const& texture);
 
 			UniformTexture2DArray() = default;
 			UniformTexture2DArray(std::string name, Program const& program, int32_t unit);
+			DEFAULT_COPY_MOVE(UniformTexture2DArray);
 			~UniformTexture2DArray() = default;
 		};
 
 		class Uniform1i
 		{
 		private:
-			GLuint location;
+			GLuint location = 0;
 
 		public:
 			void set(int32_t i);
 
 			Uniform1i() = default;
 			Uniform1i(std::string name, Program const& program);
+			DEFAULT_COPY_MOVE(Uniform1i);
 			~Uniform1i() = default;
 		};
 
@@ -510,7 +574,7 @@ namespace render
 			bwo::ArrayBuffer<glm::vec2> uv{ bwo::BufferHint::STATIC_DRAW };
 			bwo::ArrayBuffer<glm::vec3> normals{ bwo::BufferHint::STATIC_DRAW };
 			bwo::ArrayBuffer<uint16_t> indices{ bwo::BufferHint::STATIC_DRAW };
-			int32_t indexSize;
+			int32_t indexSize{};
 		};
 
 
