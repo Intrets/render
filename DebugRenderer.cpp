@@ -22,7 +22,7 @@ void render::DebugRenderer::render(
 		auto config = ogs::DebugLineConfiguration();
 		Global<ogs::State>->setState(config);
 
-		this->VP.set(cameraInfo.VP);
+		this->VP.set(cameraInfo.VP());
 		this->pointSize.set(1.0f);
 
 		this->points.set(info.world.lines.lines);
@@ -40,7 +40,7 @@ void render::DebugRenderer::render(
 
 		Global<ogs::State>->setState(config);
 
-		this->VP.set(cameraInfo.VP);
+		this->VP.set(cameraInfo.VP());
 		this->pointSize.set(200.0f / scale);
 
 		this->points.set(info.world.points.points);

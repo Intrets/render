@@ -14,6 +14,9 @@ namespace render
 		glm::mat4 P;
 
 		glm::vec3 viewPort;
-		glm::mat4 VP = P * rotation * glm::translate(-camPos);
+
+		glm::mat4 VP() const {
+			return P * rotation * glm::translate(-this->camPos);
+		}
 	};
 }
