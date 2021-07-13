@@ -10,6 +10,14 @@ namespace render
 		glm::vec4 quad;
 		glm::vec4 world;
 		int32_t rotation;
+
+		static SingleBlitRenderInfo full() {
+			return SingleBlitRenderInfo{
+				.quad = {0.0f, 0.0f, 1.0f, 1.0f},
+				.world = {-1.0f, -1.0f, 2.0f, 2.0f},
+				.rotation = 0
+			};
+		}
 	};
 
 	struct BlitRenderInfo

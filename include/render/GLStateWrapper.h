@@ -83,6 +83,8 @@ namespace ogs
 	Configuration DebugLineConfiguration();
 	Configuration HighlightConfiguration();
 	Configuration GeneralConfiguration();
+	Configuration ShadowMapConfiguration();
+	Configuration BlitConfiguration();
 
 
 	class State

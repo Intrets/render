@@ -132,7 +132,9 @@ namespace render
 
 		namespace Texture2DHelper
 		{
+			Texture2D makeDepthBuffer(glm::ivec2 size);
 			Texture2D makeNoFiltering(glm::ivec2 size);
+			Texture2D makeLinearFiltering(glm::ivec2 size);
 		};
 
 		namespace Texture2DArrayHelper
@@ -377,11 +379,14 @@ namespace render
 
 			void bindTextureColor(int32_t attachmentNumber, bwo::Texture2D const& texture, GLint mipmap);
 			void bindTextureColorLayer(int32_t attachmentNumber, bwo::Texture2DArray const& texture, int32_t mipmap, int32_t layer);
+			void bindDepthLayer(bwo::Texture2D const& texture);
 
 			void draw(glm::ivec4 viewport, std::function<void()> f);
 
 			void clear(glm::vec4 color, bool depth);
 			void clearDepth();
+
+			void onlyDepth();
 		};
 
 		class Program

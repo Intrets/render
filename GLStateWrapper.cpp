@@ -224,6 +224,28 @@ namespace ogs
 		};
 	}
 
+	Configuration ShadowMapConfiguration() {
+		return {
+			BLEND::DISABLED,
+			BLEND_FUNC::UNSET,
+			DEPTH_TEST::ENABLED,
+			DEPTH_FUNC::LESS,
+			POLYGON_MODE::FILL,
+			0.0f,
+		};
+	}
+
+	Configuration BlitConfiguration() {
+		return {
+			BLEND::DISABLED,
+			BLEND_FUNC::UNSET,
+			DEPTH_TEST::DISABLED,
+			DEPTH_FUNC::UNSET,
+			POLYGON_MODE::FILL,
+			0.0f,
+		};
+	}
+
 	Configuration::Configuration(BLEND blend_, BLEND_FUNC blendFunc_, DEPTH_TEST depthTest_, DEPTH_FUNC depthFunc_, POLYGON_MODE polygonMode_, float pointSize_) :
 		blend(blend_),
 		blendFunc(blendFunc_),

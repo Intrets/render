@@ -204,6 +204,14 @@ namespace render
 		glFramebufferTextureLayer(GL_FRAMEBUFFER, getAttachmentEnum(attachmentNumber), texture.ID, mipmap, layer);
 	}
 
+	void bwo::FrameBuffer::bindDepthLayer(bwo::Texture2D const& texture) {
+		this->size.x = texture.size.x;
+		this->size.y = texture.size.y;
+
+		glBindFramebuffer(GL_FRAMEBUFFER, this->ID);
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture.ID, 0);
+	}
+
 	void bwo::FrameBuffer::draw(glm::ivec4 viewport, std::function<void()> f) {
 		glBindFramebuffer(GL_FRAMEBUFFER, this->ID);
 		glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
@@ -225,6 +233,11 @@ namespace render
 	void bwo::FrameBuffer::clearDepth() {
 		glBindFramebuffer(GL_FRAMEBUFFER, this->ID);
 		glClear(GL_DEPTH_BUFFER_BIT);
+	}
+
+	void bwo::FrameBuffer::onlyDepth() {
+		glDrawBuffer(GL_NONE);
+		glReadBuffer(GL_NONE);
 	}
 
 	bwo::Texture2D::Texture2D(GLuint handle) {
@@ -274,6 +287,23 @@ namespace render
 		return *this;
 	}
 
+	bwo::Texture2D bwo::Texture2DHelper::makeLinearFiltering(glm::ivec2 size) {
+		Texture2D res{
+			size,
+			0,
+			GL_RGBA,
+			GL_LINEAR,
+			GL_LINEAR,
+			GL_REPEAT,
+			GL_REPEAT,
+			0,
+			GL_RGBA,
+			GL_UNSIGNED_BYTE,
+			(void*)0
+		};
+		return res;
+	}
+
 	bwo::Texture2D bwo::Texture2DHelper::makeNoFiltering(glm::ivec2 size) {
 		Texture2D res{
 			size,
@@ -288,7 +318,6 @@ namespace render
 			GL_UNSIGNED_BYTE,
 			(void*)0
 		};
-
 		return res;
 	}
 
@@ -348,6 +377,23 @@ namespace render
 			0,
 			GL_RGBA,
 			GL_UNSIGNED_BYTE,
+			(void*)0
+		};
+		return res;
+	}
+
+	bwo::Texture2D bwo::Texture2DHelper::makeDepthBuffer(glm::ivec2 size) {
+		Texture2D res{
+			size,
+			0,
+			GL_DEPTH_COMPONENT,
+			GL_NEAREST,
+			GL_NEAREST,
+			GL_CLAMP_TO_EDGE,
+			GL_CLAMP_TO_EDGE,
+			0,
+			GL_DEPTH_COMPONENT,
+			GL_FLOAT,
 			(void*)0
 		};
 		return res;
