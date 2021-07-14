@@ -1,5 +1,8 @@
 #include "BufferWrappers.h"
 
+#include <fstream>
+#include <sstream>
+
 #include <GLFW/glfw3.h>
 
 #include <mem/Global.h>
@@ -42,15 +45,78 @@ namespace render
 		glUseProgram(this->ID);
 	}
 
+	void bwo::Program::refreshAll() {
+		std::vector<Program*> programs;
+		for (auto [i, program] : refs) {
+			programs.push_back(program);
+		}
+		for (auto program : programs) {
+			program->refreshShaders();
+		}
+	}
+
+	void bwo::Program::addProgram(Program& program) {
+		assert(program.ID != 0);
+		assert(!lookup(program.ID).has_value());
+		refs[program.ID] = &program;
+	}
+
+	void bwo::Program::change(GLuint ID, Program& to) {
+		if (ID == 0) {
+			return;
+		}
+		assert(lookup(ID).has_value());
+		refs[ID] = &to;
+	}
+
+	void bwo::Program::deleteProgram(Program& program) {
+		if (program.ID == 0) {
+			return;
+		}
+		assert(lookup(program.ID).has_value());
+		refs.erase(program.ID);
+		glDeleteProgram(program.ID);
+	}
+
+	void bwo::Program::refreshShaders() {
+		if (!this->frag_path.has_value() || !this->vert_path.has_value()) {
+			return;
+		}
+
+		std::ifstream vertstream;
+		vertstream.open(this->vert_path->string());
+		std::stringstream svert;
+		svert << vertstream.rdbuf();
+		std::string string_vert = svert.str();
+
+		std::ifstream fragstream;
+		fragstream.open(this->frag_path->string());
+		std::stringstream sfrag;
+		sfrag << fragstream.rdbuf();
+		std::string string_frag = sfrag.str();
+
+		deleteProgram(*this);
+		this->ID = LoadShaders(string_vert.c_str(), string_frag.c_str());
+		addProgram(*this);
+	}
+
 	bwo::Program::Program(char const* vert_raw, char const* frag_raw, std::string const& description_) {
 		this->ID = LoadShaders(vert_raw, frag_raw);
 		this->description = description_;
-		bwo::Program::refs[this->ID] = this;
+		addProgram(*this);
+	}
+
+	bwo::Program::Program(std::string_view vert_name, std::string_view frag_file, std::string const& description_, int dummy) {
+		this->vert_path = Global<misc::PathManager>->getShadersPath() / vert_name;
+		this->frag_path = Global<misc::PathManager>->getShadersPath() / frag_file;
+
+		this->refreshShaders();
+
+		this->description = description_;
 	}
 
 	bwo::Program::~Program() {
-		Program::refs.erase(this->ID);
-		glDeleteProgram(this->ID);
+		deleteProgram(*this);
 	}
 
 	bwo::UniformMatrix4fv::UniformMatrix4fv(std::string name, Program const& program) {

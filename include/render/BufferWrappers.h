@@ -406,35 +406,62 @@ namespace render
 
 			GLuint ID = 0;
 
+			std::optional<std::filesystem::path> vert_path;
+			std::optional<std::filesystem::path> frag_path;
+
 			std::string description{};
 
 		public:
 			static std::unordered_map<int32_t, Program*> refs;
 			static std::string listAll();
 			static std::optional<Program const*> lookup(int32_t id);
+			static void change(GLuint ID, Program& to);
+			static void addProgram(Program& program);
+			static void deleteProgram(Program& program);
+			static void refreshAll();
 
 			void use();
+			void refreshShaders();
 
 			Program() = default;
 			Program(char const* vert_raw, char const* frag_raw, std::string const& description);
+			Program(std::string_view vert_name, std::string_view frag_file, std::string const& description, int);
+
 			Program(Program&& other) {
+				change(other.ID, *this);
+
 				this->ID = other.ID;
 				this->description = other.description;
 
+				this->frag_path = other.frag_path;
+				this->vert_path = other.vert_path;
+
 				other.ID = 0;
 				other.description = {};
+
+				other.frag_path = std::nullopt;
+				other.vert_path = std::nullopt;
 			};
+
 			Program& operator=(Program&& other) {
 				if (this != &other) {
 					if (this->ID != 0) {
-						Program::refs.erase(this->ID);
-						glDeleteProgram(this->ID);
+						deleteProgram(*this);
 					}
+					change(other.ID, *this);
+
 					this->ID = other.ID;
 					this->description = other.description;
 
+					this->frag_path = other.frag_path;
+					this->vert_path = other.vert_path;
+
 					other.ID = 0;
 					other.description = {};
+
+					other.frag_path = std::nullopt;
+					other.vert_path = std::nullopt;
+
 				}
 				return *this;
 			};
