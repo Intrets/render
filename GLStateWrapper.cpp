@@ -215,8 +215,8 @@ namespace ogs
 
 	Configuration GeneralConfiguration() {
 		return {
-			BLEND::ENABLED,
-			BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
+			BLEND::DISABLED,
+			BLEND_FUNC::UNSET,
 			DEPTH_TEST::ENABLED,
 			DEPTH_FUNC::LESS,
 			POLYGON_MODE::FILL,

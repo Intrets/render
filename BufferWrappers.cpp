@@ -370,6 +370,24 @@ namespace render
 		return res;
 	}
 
+	bwo::Texture2D bwo::Texture2DHelper::makeFloatBuffer(glm::ivec2 size, bool filtering) {
+		GLenum filterMode = filtering ? GL_LINEAR : GL_NEAREST;
+		Texture2D res{
+			size,
+			0,
+			GL_R32F,
+			filterMode,
+			filterMode,
+			GL_REPEAT,
+			GL_REPEAT,
+			0,
+			GL_RED,
+			GL_FLOAT,
+			(void*)0
+		};
+		return res;
+	}
+
 	bwo::Texture2D bwo::Texture2DHelper::makeNoFiltering(glm::ivec2 size) {
 		Texture2D res{
 			size,
@@ -452,7 +470,7 @@ namespace render
 		Texture2D res{
 			size,
 			0,
-			GL_DEPTH_COMPONENT,
+			GL_DEPTH_COMPONENT32F,
 			GL_NEAREST,
 			GL_NEAREST,
 			GL_CLAMP_TO_EDGE,
