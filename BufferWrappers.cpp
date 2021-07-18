@@ -45,14 +45,20 @@ namespace render
 		glUseProgram(this->ID);
 	}
 
-	void bwo::Program::refreshAll() {
+	bool bwo::Program::refreshAll() {
 		std::vector<Program*> programs;
 		for (auto [i, program] : refs) {
 			programs.push_back(program);
 		}
+
+		bool success = true;
 		for (auto program : programs) {
-			program->refreshShaders();
+			if (!program->refreshShaders()) {
+				success = false;
+			}
 		}
+
+		return success;
 	}
 
 	void bwo::Program::addProgram(Program& program) {
@@ -78,9 +84,9 @@ namespace render
 		glDeleteProgram(program.ID);
 	}
 
-	void bwo::Program::refreshShaders() {
+	bool bwo::Program::refreshShaders() {
 		if (!this->frag_path.has_value() || !this->vert_path.has_value()) {
-			return;
+			return true;
 		}
 
 		std::ifstream vertstream;
@@ -98,6 +104,8 @@ namespace render
 		deleteProgram(*this);
 		this->ID = LoadShaders(string_vert.c_str(), string_frag.c_str());
 		addProgram(*this);
+
+		return true;
 	}
 
 	bwo::Program::Program(char const* vert_raw, char const* frag_raw, std::string const& description_) {
@@ -110,7 +118,8 @@ namespace render
 		this->vert_path = Global<misc::PathManager>->getShadersPath() / vert_name;
 		this->frag_path = Global<misc::PathManager>->getShadersPath() / frag_file;
 
-		this->refreshShaders();
+		bool b = this->refreshShaders();
+		assert(b);
 
 		this->description = description_;
 	}

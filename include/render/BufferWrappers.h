@@ -5,6 +5,7 @@
 
 #include <optional>
 #include <functional>
+#include <filesystem>
 
 #include <misc/Misc.h>
 
@@ -420,10 +421,12 @@ namespace render
 			static void change(GLuint ID, Program& to);
 			static void addProgram(Program& program);
 			static void deleteProgram(Program& program);
-			static void refreshAll();
+			[[nodiscard]]
+			static bool refreshAll();
 
 			void use();
-			void refreshShaders();
+			[[nodiscard]]
+			bool refreshShaders();
 
 			Program() = default;
 			Program(char const* vert_raw, char const* frag_raw, std::string const& description);
