@@ -110,6 +110,7 @@ namespace render
 			GLuint ID;
 			glm::ivec2 size;
 
+			Texture2D();
 			Texture2D(GLuint handle);
 			Texture2D(
 				glm::ivec2 size,

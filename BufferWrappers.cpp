@@ -315,6 +315,11 @@ namespace render
 		glReadBuffer(GL_NONE);
 	}
 
+	bwo::Texture2D::Texture2D() {
+		this->ID = 0;
+		this->size = { 0,0 };
+	}
+
 	bwo::Texture2D::Texture2D(GLuint handle) {
 		this->size = glm::ivec2(0, 0);
 		this->ID = handle;

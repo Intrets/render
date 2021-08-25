@@ -12,12 +12,14 @@ make_module(
 		BufferWrappers
 		GLStateWrapper
 		loaders/ShaderLoader
+		loaders/TextureLoader
 	CXX_STANDARD 20
 	REQUIRED_LIBS
 		mem
 		WGLM
 		misc
 		juce::juce_opengl
+		gli
 )
 
 set(SHADER_FILES

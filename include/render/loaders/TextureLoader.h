@@ -3,6 +3,8 @@
 #include <string>
 #include <filesystem>
 
+#include <juce_opengl/opengl/juce_gl.h>
+
 namespace render
 {
 	namespace bwo
@@ -10,8 +12,7 @@ namespace render
 		class Texture2D;
 	}
 
-	/// Filename can be KTX or DDS files
-	GLuint loadTexture(const std::string Filename);
 	bwo::Texture2D load2DTexture(std::string const Filename);
 	bwo::Texture2D load2DTexture(std::filesystem::path path);
+	bwo::Texture2D load2DTexture(char const* data, size_t size);
 }
