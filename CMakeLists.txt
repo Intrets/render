@@ -14,7 +14,6 @@ make_module(
 		loaders/ShaderLoader
 	CXX_STANDARD 20
 	REQUIRED_LIBS
-		GLEW
 		mem
 		WGLM
 		misc

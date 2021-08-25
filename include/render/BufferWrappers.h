@@ -1,6 +1,7 @@
 #pragma once
 
-#include <GL/glew.h>
+#include <juce_opengl/juce_opengl.h>
+#include <juce_opengl/opengl/juce_gl.h>
 #include <wglm/glm.hpp>
 
 #include <optional>
@@ -10,6 +11,8 @@
 #include <misc/Misc.h>
 
 #include <iostream>
+
+using namespace juce::gl;
 
 namespace render
 {

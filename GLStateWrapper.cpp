@@ -1,8 +1,11 @@
 #include "GLStateWrapper.h"
 
+#include <juce_opengl/opengl/juce_gl.h>
 #include <juce_opengl/juce_opengl.h>
 
 #include <cassert>
+
+using namespace juce::gl;
 
 namespace ogs
 {
@@ -13,7 +16,6 @@ namespace ogs
 		this->setDepthFunc(DEPTH_FUNC::LESS);
 		this->setPolygonMode(POLYGON_MODE::FILL);
 
-#define GL_MAX_COLOR_ATTACHMENTS 0x8CDF
 		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &this->MAX_COLOR_ATTACHMENTS);
 	}
 
