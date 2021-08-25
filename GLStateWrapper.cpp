@@ -1,5 +1,7 @@
 #include "GLStateWrapper.h"
 
+#include <juce_opengl/juce_opengl.h>
+
 #include <cassert>
 
 namespace ogs
@@ -11,6 +13,7 @@ namespace ogs
 		this->setDepthFunc(DEPTH_FUNC::LESS);
 		this->setPolygonMode(POLYGON_MODE::FILL);
 
+#define GL_MAX_COLOR_ATTACHMENTS 0x8CDF
 		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &this->MAX_COLOR_ATTACHMENTS);
 	}
 
@@ -101,6 +104,7 @@ namespace ogs
 	}
 
 	void ogs::State::setPolygonMode(POLYGON_MODE mode) {
+#define GL_PROGRAM_POINT_SIZE 0x8642
 		if (this->configuration.polygonMode != mode) {
 			if (this->configuration.polygonMode == POLYGON_MODE::POINT) {
 				glDisable(GL_PROGRAM_POINT_SIZE);

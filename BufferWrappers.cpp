@@ -3,8 +3,6 @@
 #include <fstream>
 #include <sstream>
 
-#include <GLFW/glfw3.h>
-
 #include <mem/Global.h>
 #include <misc/PathManager.h>
 #include <render/loaders/ShaderLoader.h>
@@ -121,6 +119,7 @@ namespace render
 		bool b = this->refreshShaders();
 		assert(b);
 
+
 		this->description = description_;
 	}
 
@@ -214,13 +213,14 @@ namespace render
 		this->location = glGetUniformLocation(program.ID, name.c_str());
 	}
 
-	bwo::FrameBuffer::FrameBuffer(GLFWwindow* window) {
-		this->ID = 0;
-		glfwGetWindowSize(window, &this->size.x, &this->size.y);
-	}
-
 	bwo::FrameBuffer::FrameBuffer() {
 		glGenFramebuffers(1, &this->ID);
+	}
+
+	bwo::FrameBuffer::FrameBuffer(int x, int y) {
+		this->ID = 0;
+		this->size.x = x;
+		this->size.y = y;
 	}
 
 	bwo::FrameBuffer::~FrameBuffer() {

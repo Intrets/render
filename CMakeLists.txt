@@ -9,47 +9,19 @@ project(${MODULE_NAME} LANGUAGES CXX)
 make_module(
 	MODULE_NAME ${MODULE_NAME}
 	MODULE_FILES
-		Enums
-		Colors
 		BufferWrappers
-		loaders/ShaderLoader
-		loaders/ModelLoader
-		loaders/TextureLoader
-		loaders/vboindexer
-		BlitRenderer
-		UIBackgroundRenderer
-		TextRenderer
-		DebugRenderer
-		BlitRendererArray
-		infos/TextRenderInfo
-		infos/UIRenderInfo
-		infos/CameraInfo
-		infos/TileRenderInfo
-		infos/BlitArrayRenderInfo
-		infos/BlitRenderInfo
-		infos/DebugRenderInfo
-		infos/HighlightRenderInfo
-		infos/proxy/UIInfos
-		Fonts
-		textures/BlockIDTextures
 		GLStateWrapper
-		HighlightRenderer
+		loaders/ShaderLoader
 	CXX_STANDARD 20
 	REQUIRED_LIBS
-		WGLM
 		GLEW
-		GLI
-		GLFW3
 		mem
+		WGLM
 		misc
+		juce::juce_opengl
 )
 
 set(SHADER_FILES
-	Blit
-	UIBackground
-	BlitArray
-	Debug
-	Highlight
 )
 
 foreach(SHADER ${SHADER_FILES})
@@ -61,6 +33,11 @@ foreach(SHADER ${SHADER_FILES})
 	file(READ "${FULL_PATH}.vert" VERTEX_SHADER)
 	file(WRITE "${FULL_PATH}.vert.inc" "static const char* ${SHADER}_vert = R\"(${VERTEX_SHADER})\";\n")
 endforeach()
+
+target_compile_definitions(${MODULE_NAME}
+    PUBLIC
+        JUCE_OPENGL3=1
+)
 
 target_include_directories(${MODULE_NAME} PRIVATE "./shaders")
 
