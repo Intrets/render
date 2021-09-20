@@ -13,6 +13,7 @@ make_module(
 		GLStateWrapper
 		loaders/ShaderLoader
 		loaders/TextureLoader
+		Colors
 	CXX_STANDARD 20
 	REQUIRED_LIBS
 		mem
