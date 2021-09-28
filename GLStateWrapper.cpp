@@ -20,6 +20,7 @@ namespace ogs
 	}
 
 	void State::setState(Configuration const& config) {
+		this->flushState();
 		this->setBlend(config.blend);
 		if (config.blend == BLEND::ENABLED) {
 			this->setBlendFunc(config.blendFunc);
@@ -98,6 +99,9 @@ namespace ogs
 				case DEPTH_FUNC::LESS:
 					glDepthFunc(GL_LESS);
 					break;
+				case DEPTH_FUNC::LEQUAL:
+					glDepthFunc(GL_LEQUAL);
+					break;
 				default:
 					assert(0);
 					break;
@@ -129,6 +133,14 @@ namespace ogs
 					break;
 			}
 		}
+	}
+
+	void State::flushState() {
+		this->configuration.blend = BLEND::UNSET;
+		this->configuration.blendFunc = BLEND_FUNC::UNSET;
+		this->configuration.depthTest = DEPTH_TEST::UNSET;
+		this->configuration.depthFunc = DEPTH_FUNC::UNSET;
+		this->configuration.polygonMode = POLYGON_MODE::UNSET;
 	}
 
 	Configuration TextConfiguration() {
@@ -204,6 +216,17 @@ namespace ogs
 			DEPTH_TEST::DISABLED,
 			DEPTH_FUNC::UNSET,
 			POLYGON_MODE::LINE,
+			0.0f,
+		};
+	}
+
+	Configuration NinesConfiguration() {
+		return {
+			BLEND::ENABLED,
+			BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
+			DEPTH_TEST::ENABLED,
+			DEPTH_FUNC::LEQUAL,
+			POLYGON_MODE::FILL,
 			0.0f,
 		};
 	}

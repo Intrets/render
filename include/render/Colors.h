@@ -1,8 +1,12 @@
 #pragma once
 
 #include <wglm/glm.hpp>
+
 #include <string>
 #include <concepts>
+#include <bit>
+
+#include "SRGBConversion.h"
 
 namespace render
 {
@@ -11,13 +15,39 @@ namespace render
 		uint32_t c;
 	};
 
-	static constexpr Color red = { 0xFF0000FF };
-	static constexpr Color green = { 0xFF00FF00 };
-	static constexpr Color blue = { 0xFFFF0000 };
-	static constexpr Color magenta = { 0xFFFF00FF };
-	static constexpr Color yellow = { 0xF00FFFFF };
-	static constexpr Color cyan = { 0xFFFFFF00 };
-	static constexpr Color white = { 0xFFFFFFFF };
+	template<class T>
+	constexpr T id(T t) { return t; };
+
+	constexpr Color toLinear(Color other) {
+		struct H
+		{
+			uint8_t a;
+			uint8_t b;
+			uint8_t g;
+			uint8_t r;
+		};
+
+		H h = std::bit_cast<H>(other);
+
+		h.r = ::toLinear(h.r);
+		h.g = ::toLinear(h.g);
+		h.b = ::toLinear(h.b);
+		h.a = h.a;
+
+		return std::bit_cast<Color>(h);
+	}
+
+	using converterFunctionType = Color(*)(Color);
+	constexpr converterFunctionType converter = toLinear;
+
+	static constexpr Color red = converter({ 0xFF0000FF });
+	static constexpr Color green = converter({ 0xFF00FF00 });
+	static constexpr Color blue = converter({ 0xFFFF0000 });
+	static constexpr Color magenta = converter({ 0xFFFF00FF });
+	static constexpr Color yellow = converter({ 0xFF00FFFF });
+	static constexpr Color cyan = converter({ 0xFFFFFF00 });
+	static constexpr Color white = converter({ 0xFFFFFFFF });
+	static constexpr Color dlue = converter({ 0xFF261f00 });
 
 	template<class T>
 	Color uniqueColor(T val) {

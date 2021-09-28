@@ -32,6 +32,7 @@ enum class DEPTH_FUNC
 {
 	UNSET,
 	LESS,
+	LEQUAL,
 	MAX,
 };
 
@@ -84,7 +85,7 @@ namespace ogs
 	Configuration GeneralConfiguration();
 	Configuration ShadowMapConfiguration();
 	Configuration BlitConfiguration();
-
+	Configuration NinesConfiguration();
 
 	class State
 	{
@@ -102,5 +103,7 @@ namespace ogs
 		void setDepthTest(DEPTH_TEST test);
 		void setDepthFunc(DEPTH_FUNC func);
 		void setPolygonMode(POLYGON_MODE mode);
+
+		void flushState();
 	};
 }

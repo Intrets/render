@@ -14,6 +14,7 @@ make_module(
 		loaders/ShaderLoader
 		loaders/TextureLoader
 		Colors
+		SRGBConversion
 	CXX_STANDARD 20
 	REQUIRED_LIBS
 		mem
