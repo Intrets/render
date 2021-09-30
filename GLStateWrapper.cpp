@@ -20,7 +20,6 @@ namespace ogs
 	}
 
 	void State::setState(Configuration const& config) {
-		this->flushState();
 		this->setBlend(config.blend);
 		if (config.blend == BLEND::ENABLED) {
 			this->setBlendFunc(config.blendFunc);

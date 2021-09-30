@@ -47,7 +47,8 @@ namespace render
 	static constexpr Color yellow = converter({ 0xFF00FFFF });
 	static constexpr Color cyan = converter({ 0xFFFFFF00 });
 	static constexpr Color white = converter({ 0xFFFFFFFF });
-	static constexpr Color dlue = converter({ 0xFF261f00 });
+	static constexpr Color dlue = converter({ 0xFF261F00 });
+	static constexpr Color nice_blue = converter({ 0xFFFFAC00 });
 
 	template<class T>
 	Color uniqueColor(T val) {

@@ -619,6 +619,7 @@ namespace render
 
 		template<class T>
 		inline ArrayBuffer<T>::ArrayBuffer(BufferHint hint) {
+			assert(this->ID == 0);
 			glGenBuffers(1, &this->ID);
 			this->usageHint = static_cast<GLenum>(hint);
 		}
@@ -641,12 +642,14 @@ namespace render
 
 		template<class T>
 		inline void ArrayBuffer<T>::setRaw(uint32_t size, void const* data) {
+			assert(this->ID != 0);
 			glBindBuffer(GL_ARRAY_BUFFER, this->ID);
 			glBufferData(GL_ARRAY_BUFFER, size, data, this->usageHint);
 		}
 
 		template<class T>
 		inline void ArrayBuffer<T>::bind(GLenum location) {
+			assert(this->ID != 0);
 			glBindBuffer(location, this->ID);
 		}
 	}
