@@ -5,7 +5,7 @@
 #include <cmath>
 
 constexpr uint8_t toLinear(uint8_t x) {
-	if constexpr (!std::is_constant_evaluated()) {
+	if (!std::is_constant_evaluated()) {
 		const float v = x / 255.0;
 
 		if (v <= 0.04045) {
