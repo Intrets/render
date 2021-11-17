@@ -3,8 +3,6 @@
 #include <string>
 #include <filesystem>
 
-#include <juce_opengl/opengl/juce_gl.h>
-
 namespace render
 {
 	namespace bwo

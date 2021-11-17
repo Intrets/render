@@ -20,8 +20,8 @@ make_module(
 		mem
 		WGLM
 		misc
-		juce::juce_opengl
 		gli
+		GLEW
 )
 
 set(SHADER_FILES

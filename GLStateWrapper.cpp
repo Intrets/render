@@ -1,11 +1,8 @@
 #include "GLStateWrapper.h"
 
-#include <juce_opengl/opengl/juce_gl.h>
-#include <juce_opengl/juce_opengl.h>
+#include <GL/glew.h>
 
 #include <cassert>
-
-using namespace juce::gl;
 
 namespace ogs
 {

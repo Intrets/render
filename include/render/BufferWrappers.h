@@ -1,7 +1,7 @@
 #pragma once
 
-#include <juce_opengl/juce_opengl.h>
-#include <juce_opengl/opengl/juce_gl.h>
+#include <GL/glew.h>
+
 #include <wglm/glm.hpp>
 
 #include <optional>
@@ -13,8 +13,6 @@
 #include <iostream>
 
 #include "Colors.h"
-
-using namespace juce::gl;
 
 namespace render
 {

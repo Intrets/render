@@ -26,6 +26,8 @@
 
 #include "loaders/TextureLoader.h"
 
+#include <GL/glew.h>
+
 #include <iostream>
 
 #if defined(COMPILER_CLANGCL) || defined(COMPILER_CLANG)
