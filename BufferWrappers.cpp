@@ -1,3 +1,4 @@
+#include "include\render\BufferWrappers.h"
 #include "BufferWrappers.h"
 
 #include <fstream>
@@ -6,6 +7,7 @@
 #include <mem/Global.h>
 #include <misc/PathManager.h>
 #include <render/loaders/ShaderLoader.h>
+#include <resource_data/ReadFile.h>
 
 #include "GLStateWrapper.h"
 
@@ -83,42 +85,62 @@ namespace render
 	}
 
 	bool bwo::Program::refreshShaders() {
-		if (!this->frag_path.has_value() || !this->vert_path.has_value()) {
-			return true;
+		auto maybeFragBuffer = this->getFragmentBuffer();
+		auto maybeVertBuffer = this->getVertexBuffer();
+		if (!maybeFragBuffer || !maybeVertBuffer) {
+			return false;
 		}
 
-		std::ifstream vertstream;
-		vertstream.open(this->vert_path->string());
-		std::stringstream svert;
-		svert << vertstream.rdbuf();
-		std::string string_vert = svert.str();
-
-		std::ifstream fragstream;
-		fragstream.open(this->frag_path->string());
-		std::stringstream sfrag;
-		sfrag << fragstream.rdbuf();
-		std::string string_frag = sfrag.str();
+		auto const& fragBuffer = maybeFragBuffer.value();
+		auto const& vertBuffer = maybeVertBuffer.value();
 
 		deleteProgram(*this);
-		this->ID = LoadShaders(string_vert.c_str(), string_frag.c_str());
+		this->ID = LoadShaders(
+			vertBuffer->getData<char>(),
+			vertBuffer->getSize<char>(),
+			fragBuffer->getData<char>(),
+			fragBuffer->getSize<char>()
+		);
 		addProgram(*this);
 
 		return true;
 	}
 
-	bwo::Program::Program(char const* vert_raw, char const* frag_raw, std::string const& description_) {
-		this->ID = LoadShaders(vert_raw, frag_raw);
+	bwo::Program::Program(
+		char const* vert_raw, size_t vert_size,
+		char const* frag_raw, size_t frag_size,
+		std::string const& description_
+	) {
+		this->ID = LoadShaders(vert_raw, vert_size, frag_raw, frag_size);
 		this->description = description_;
 		addProgram(*this);
 	}
 
 	bwo::Program::Program(std::string_view vert_name, std::string_view frag_file, std::string const& description_, int dummy) {
-		this->vert_path = Global<misc::PathManager>->getShadersPath() / vert_name;
-		this->frag_path = Global<misc::PathManager>->getShadersPath() / frag_file;
+		auto vert_path = Global<misc::PathManager>->getShadersPath() / vert_name;
+		auto frag_path = Global<misc::PathManager>->getShadersPath() / frag_file;
 
+		this->getVertexBuffer = [=]() {
+			return readFile(vert_path);
+		};
+		this->getFragmentBuffer = [=]() {
+			return readFile(frag_path);
+		};
+
+		[[maybe_unused]]
 		bool b = this->refreshShaders();
 		assert(b);
 
+		this->description = description_;
+	}
+
+	bwo::Program::Program(BufferGenerator vertexGenerator, BufferGenerator fragmentGenerator, std::string_view description_) {
+		this->getVertexBuffer = vertexGenerator;
+		this->getFragmentBuffer = fragmentGenerator;
+
+		[[maybe_unused]]
+		bool b = this->refreshShaders();
+		assert(b);
 
 		this->description = description_;
 	}

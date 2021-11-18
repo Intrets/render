@@ -18,7 +18,7 @@ using namespace std;
 
 namespace render
 {
-	GLuint LoadShaders(const char* vertex_raw, const char* fragment_raw) {
+	GLuint LoadShaders(const char* vertex_raw, GLint vertex_size, const char* fragment_raw, GLint fragment_size) {
 		printf("--- Compiling Shaders ---\n");
 
 		// Create the shaders
@@ -29,7 +29,7 @@ namespace render
 		int32_t InfoLogLength;
 
 		// Compile Vertex Shader
-		glShaderSource(VertexShaderID, 1, &vertex_raw, NULL);
+		glShaderSource(VertexShaderID, 1, &vertex_raw, &vertex_size);
 		glCompileShader(VertexShaderID);
 
 		// Check Vertex Shader
@@ -42,7 +42,7 @@ namespace render
 		}
 
 		// Compile Fragment Shader
-		glShaderSource(FragmentShaderID, 1, &fragment_raw, NULL);
+		glShaderSource(FragmentShaderID, 1, &fragment_raw, &fragment_size);
 		glCompileShader(FragmentShaderID);
 
 		// Check Fragment Shader

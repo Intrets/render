@@ -22,6 +22,7 @@ make_module(
 		misc
 		gli
 		GLEW
+		resource_data
 )
 
 set(SHADER_FILES

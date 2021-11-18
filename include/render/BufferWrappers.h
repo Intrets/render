@@ -10,6 +10,8 @@
 
 #include <misc/Misc.h>
 
+#include <resource_data/ResourceData.h>
+
 #include <iostream>
 
 #include "Colors.h"
@@ -409,8 +411,9 @@ namespace render
 
 			GLuint ID = 0;
 
-			std::optional<std::filesystem::path> vert_path;
-			std::optional<std::filesystem::path> frag_path;
+			using BufferGenerator = std::function<std::optional<std::unique_ptr<Buffer>>()>;
+			BufferGenerator getVertexBuffer;
+			BufferGenerator getFragmentBuffer;
 
 			std::string description{};
 
@@ -429,8 +432,10 @@ namespace render
 			bool refreshShaders();
 
 			Program() = default;
-			Program(char const* vert_raw, char const* frag_raw, std::string const& description);
+			Program(
+				char const* vert_raw, size_t vert_size, char const* frag_raw, size_t frag_size, std::string const& description);
 			Program(std::string_view vert_name, std::string_view frag_file, std::string const& description, int);
+			Program(BufferGenerator vertexGenerator, BufferGenerator fragmentGenerator, std::string_view description);
 
 			Program(Program&& other) {
 				change(other.ID, *this);
@@ -438,14 +443,14 @@ namespace render
 				this->ID = other.ID;
 				this->description = other.description;
 
-				this->frag_path = other.frag_path;
-				this->vert_path = other.vert_path;
+				this->getFragmentBuffer = other.getFragmentBuffer;
+				this->getVertexBuffer = other.getVertexBuffer;
 
 				other.ID = 0;
 				other.description = {};
 
-				other.frag_path = std::nullopt;
-				other.vert_path = std::nullopt;
+				other.getFragmentBuffer = {};
+				other.getVertexBuffer = {};
 			};
 
 			Program& operator=(Program&& other) {
@@ -458,15 +463,14 @@ namespace render
 					this->ID = other.ID;
 					this->description = other.description;
 
-					this->frag_path = other.frag_path;
-					this->vert_path = other.vert_path;
+					this->getFragmentBuffer = other.getFragmentBuffer;
+					this->getVertexBuffer = other.getVertexBuffer;
 
 					other.ID = 0;
 					other.description = {};
 
-					other.frag_path = std::nullopt;
-					other.vert_path = std::nullopt;
-
+					other.getFragmentBuffer = {};
+					other.getVertexBuffer = {};
 				}
 				return *this;
 			};
