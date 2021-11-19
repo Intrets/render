@@ -11,6 +11,7 @@ make_module(
 	MODULE_FILES
 		BufferWrappers
 		GLStateWrapper
+		RendererTemplate
 		loaders/ShaderLoader
 		loaders/TextureLoader
 		Colors
@@ -25,23 +26,10 @@ make_module(
 		resource_data
 )
 
-set(SHADER_FILES
+add_executable(${MODULE_NAME}_test_exe Main.cpp)
+
+target_link_libraries(${MODULE_NAME}_test_exe
+	PUBLIC
+		${MODULE_NAME}
+		tepp
 )
-
-foreach(SHADER ${SHADER_FILES})
-	set(FULL_PATH "${CMAKE_CURRENT_SOURCE_DIR}/shaders/${SHADER}")
-
-	file(READ "${FULL_PATH}.frag" FRAGMENT_SHADER)
-	file(WRITE "${FULL_PATH}.frag.inc" "static const char* ${SHADER}_frag = R\"(${FRAGMENT_SHADER})\";\n")
-
-	file(READ "${FULL_PATH}.vert" VERTEX_SHADER)
-	file(WRITE "${FULL_PATH}.vert.inc" "static const char* ${SHADER}_vert = R\"(${VERTEX_SHADER})\";\n")
-endforeach()
-
-target_compile_definitions(${MODULE_NAME}
-    PUBLIC
-        JUCE_OPENGL3=1
-)
-
-target_include_directories(${MODULE_NAME} PRIVATE "./shaders")
-
