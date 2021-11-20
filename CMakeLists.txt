@@ -32,4 +32,6 @@ target_link_libraries(${MODULE_NAME}_test_exe
 	PUBLIC
 		${MODULE_NAME}
 		tepp
+		opengl32
+		shaders
 )

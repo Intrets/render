@@ -409,9 +409,12 @@ namespace render
 			friend class UniformTexture2D;
 			friend class UniformTexture2DArray;
 
+		public:
+			using BufferGenerator = std::function<std::optional<std::unique_ptr<Buffer>>()>;
+
 			GLuint ID = 0;
 
-			using BufferGenerator = std::function<std::optional<std::unique_ptr<Buffer>>()>;
+		private:
 			BufferGenerator getVertexBuffer;
 			BufferGenerator getFragmentBuffer;
 

@@ -1,66 +1,51 @@
 #include <iostream>
 
+#include <concepts>
+
 #include "render/RendererTemplate.h"
 
-struct Foo { int a; };
-struct Bar { std::string s; };
-struct Baz { std::vector<int> ok; };
-
-struct Test
-{
-	Foo foo;
-	Bar bar;
-	Baz baz;
-
-	//Test(Foo, Bar, Baz) {};
-};
-
-template<class... Args>
-struct A
-{
-
-};
+#include <shaders.h>
 
 int main() {
-	TEMPLATES::RenderInfo().test();
-	//TEMPLATES::RenderInfo<Foo, Bar, Baz>().addSingleTest(Foo(), Bar(), Baz());
-	//TEMPLATES::RenderInfo2<Test>().addSingleTest(Foo(), Bar(), Baz());
+	using namespace render;
 
-	//te::replicate_t<10, int> bbb;
+	Uniform1f test{ "uniform name test" };
+	UniformTexture2D tex{ "texture" };
 
-	//constexpr bool b1 = te::has_members<Test, te::WildCard>;
-	//constexpr bool b2 = te::has_members<Test, te::WildCard, te::WildCard>;
-	//constexpr bool b3 = te::has_members<Test, te::WildCard, te::WildCard, te::WildCard>;
+	//tex.
 
-	constexpr bool b0 = std::is_trivially_constructible_v<Test, te::WildCard, te::WildCard, te::WildCard>;
-	constexpr bool b1 = std::is_constructible_v<Test, te::WildCard, te::WildCard, te::WildCard, te::WildCard>;
+	//TEMPLATES::RenderInfo<Circle> ok;
 
-	//auto w4 = Test{ te::WildCard(), te::WildCard(), te::WildCard(), te::WildCard() };
-	//auto w3 = Test{ te::WildCard(), te::WildCard(), te::WildCard() };
-	//auto w2 = Test{ te::WildCard(), te::WildCard() };
-	//auto w1 = Test{ te::WildCard() };
+	//TEMPLATES::Renderer<Circle, Uniforms> renderer(
+	//	getBufferGenerator(shaders_enum::Circle_vert),
+	//	getBufferGenerator(shaders_enum::Circle_frag),
+	//	"CircleRenderer"
+	//);
 
-	auto a = Test(te::WildCard());
+	//renderer.render(
+	//	{},
+	//	{
+	//		.depth = 1.0f,
+	//		.borderSize = 1.0f,
+	//		.texture_t = tex,
+	//		.texturePixelSize = 0.1f,
+	//		.worldPixelSize = 1.0f,
+	//		.VP = glm::mat4()
+	//	}
+	//	);
 
-	te::has_n_members_f(te::Type<Test>, te::Value<3>);
+	render::ArrayBuffer<Circle, 1> buffer;
+	render::VAO vao(buffer, buffer, buffer);
 
-	constexpr auto test = te::Type_function<std::is_constructible>;
+	rand();
 
-	constexpr auto losing = std::is_constructible_v<Test, te::WildCard, te::WildCard, te::WildCard>;
+	//renderer.uniforms.
 
-	constexpr auto ok = Getvalue(test(te::Type<Test>, te::Type<te::WildCard>));
+	//renderer.render()
 
-
-
-	constexpr bool b3 = te::has_n_members_v<Test, 0>;
-	constexpr bool b4 = te::has_n_members_v<Test, 1>;
-	constexpr bool b5 = te::has_n_members_v<Test, 2>;
-	constexpr bool b6 = te::has_n_members_v<Test, 3>;
-	constexpr bool b7 = te::has_n_members_v<Test, 4>;
+	//test.add()
 
 
-
-	te::Dest<Test>::type bbb;
 
 	rand();
 
