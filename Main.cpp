@@ -34,8 +34,8 @@ int main() {
 	//	}
 	//	);
 
-	render::ArrayBuffer<Circle, 1> buffer;
-	render::VAO vao(buffer, buffer, buffer);
+	//render::ArrayBuffer<Circle, 1> buffer;
+	//render::VAO vao(buffer, buffer, buffer);
 
 	rand();
 

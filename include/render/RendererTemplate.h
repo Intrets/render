@@ -10,10 +10,11 @@
 #include <wglm/glm.hpp>
 
 #include <mem/LazyGlobal.h>
+#include <mem/Global.h>
 
 #include "BufferWrappers.h"
 #include "Colors.h"
-
+#include "GLStateWrapper.h"
 
 namespace render
 {
@@ -113,17 +114,39 @@ namespace render
 		glUniformMatrix4fv(this->location, 1, GL_FALSE, &other[0][0]);
 	}
 
+	namespace description
+	{
+
+		template<class T>
+		struct BufferDescription
+		{
+
+		};
+
+	}
+
 	template<class T, int divisor_>
 	struct ArrayBuffer
 	{
 		using value_type = T;
 		constexpr static int divisor = divisor_;
 
-		GLenum usageHint;
-		GLuint ID;
+		GLenum usageHint = GL_STREAM_DRAW;
+		GLuint ID = 0;
+		size_t size = 0;
+
+		ArrayBuffer() {
+			assert(this->ID == 0);
+			glGenBuffers(1, &this->ID);
+		}
+
+		~ArrayBuffer() {
+			assert(this->ID != 0);
+			glDeleteBuffers(1, &this->ID);
+		}
 
 		void set(std::vector<T> const& data) {
-			this->setRaw(data.size(), data.data());
+			this->setRaw(sizeof(T) * data.size(), data.data());
 		};
 
 		void bind(GLenum location) {
@@ -131,12 +154,15 @@ namespace render
 			glBindBuffer(location, this->ID);
 		}
 
-		void setRaw(size_t size, void const* data) {
+		void setRaw(size_t size_, void const* data) {
 			assert(this->ID != 0);
-			assert(size > 0);
+			assert(size_ > 0);
+			this->size = size_;
 			glBindBuffer(GL_ARRAY_BUFFER, this->ID);
 			glBufferData(GL_ARRAY_BUFFER, size, data, this->usageHint);
 		}
+
+		NO_COPY(ArrayBuffer);
 	};
 
 	struct VertexInfoState
@@ -155,7 +181,7 @@ namespace render
 		template<size_t size>
 		struct applyVertexInfo<float, size>
 		{
-			void run(VertexInfoState& state) {
+			static void run(VertexInfoState& state) {
 				glVertexAttribPointer(
 					state.index,
 					static_cast<GLint>(size),
@@ -175,7 +201,7 @@ namespace render
 		template<size_t size>
 		struct applyVertexInfo<int32_t, size>
 		{
-			void run(VertexInfoState& state) {
+			static void run(VertexInfoState& state) {
 				glVertexAttribIPointer(
 					state.index,
 					static_cast<GLint>(size),
@@ -194,7 +220,7 @@ namespace render
 		template<size_t size>
 		struct applyVertexInfo<Color, size>
 		{
-			void run(VertexInfoState& state) {
+			static void run(VertexInfoState& state) {
 				// used as a vec4 in shader, makes no sense to have multiple
 				static_assert(size == 1);
 				glVertexAttribPointer(
@@ -217,19 +243,19 @@ namespace render
 	template<class T>
 	static void applyVertexInfo(VertexInfoState& state) {
 		if constexpr (std::same_as<T, float>) {
-			detail::applyVertexInfo<float, 1>(state);
+			detail::applyVertexInfo<float, 1>::run(state);
 		}
 		else if constexpr (std::same_as<T, glm::vec2>) {
-			detail::applyVertexInfo<float, 2>(state);
+			detail::applyVertexInfo<float, 2>::run(state);
 		}
 		else if constexpr (std::same_as<T, glm::vec3>) {
-			detail::applyVertexInfo<float, 3>(state);
+			detail::applyVertexInfo<float, 3>::run(state);
 		}
 		else if constexpr (std::same_as<T, glm::vec4>) {
-			detail::applyVertexInfo<float, 4>(state);
+			detail::applyVertexInfo<float, 4>::run(state);
 		}
 		else if constexpr (std::same_as<T, Color>) {
-			detail::applyVertexInfo<Color, 1>(state);
+			detail::applyVertexInfo<Color, 1>::run(state);
 		}
 		else {
 			static_assert(0);
@@ -267,22 +293,29 @@ namespace render
 
 			auto bind = this->bindScoped();
 
+			VertexInfoState state{
+				.index = 0,
+			};
+
 			te::tuple_for_each(
-				[](auto& buffer) {
+				[&](auto& buffer) {
 					using T = std::remove_cvref_t<decltype(buffer)>;
 					using members = te::get_members_t<T::value_type>;
 
-					VertexInfoState state{
-						.index = 0,
-						.stride = sizeof(T::value_type),
-						.offset = 0,
-						.divisor = buffer.divisor
-					};
+					state.stride = sizeof(T::value_type);
+					state.offset = 0;
+					state.divisor = buffer.divisor;
 
 					buffer.bind(GL_ARRAY_BUFFER);
-					applyVertexInfo<float>(state);
 
 					te::for_each_type([&]<class T>(te::Type_t<T>) {
+						std::cout << "   new attribute\n";
+						std::cout
+							<< " attribute: " << state.index
+							<< " size: " << sizeof(T)
+							<< " stride: " << state.stride
+							<< " offset: " << state.offset << "\n";
+
 						applyVertexInfo<T>(state);
 					}, te::Type<members>);
 
@@ -316,13 +349,10 @@ namespace render
 		struct RenderInfo;
 
 		template<
-			class T,
 			class Uniforms,
 			class... Buffers
 		> struct Renderer
 		{
-			using RenderInfoValueType = typename RenderInfo<T>;
-
 			bwo::Program program;
 
 			std::tuple<Buffers...> buffers;
@@ -340,29 +370,123 @@ namespace render
 				te::tuple_for_each(
 					[this](auto& t) {
 						t.init(this->program);
-					}, te::get_tie(this->uniforms)
-						);
+					}, te::get_tie(this->uniforms));
 			}
 
 			void render(
-				RenderInfo<T> const& info,
-				Uniforms uniforms_
+				bwo::FrameBuffer& target,
+				glm::ivec4 viewport,
+				ogs::Configuration const& config,
+				Uniforms uniforms_,
+				te::optional_ref<RenderInfo<typename Buffers::value_type> const>... infos
 			) {
+				size_t instanceCount;
+				{
+					bool valid = true;
+					std::optional<size_t> infoSize;
+
+					auto zipped = te::tuple_zip(
+						te::tie_tuple_elements(this->buffers),
+						std::tie(infos...)
+					);
+
+					te::tuple_for_each([&](auto& tuple) {
+						auto& [buffer, maybeInfo] = tuple;
+						if (buffer.divisor == 0) {
+							return;
+						}
+
+						if (!infoSize.has_value()) {
+							infoSize = maybeInfo.value().getSize();
+						}
+						else if (infoSize.value() != maybeInfo.value().getSize()) {
+							valid = false;
+						}
+						}, zipped);
+
+					if (!infoSize.has_value()) {
+						return;
+					}
+
+					instanceCount = infoSize.value();
+
+					assert(valid);
+				}
+				if (instanceCount == 0) {
+					return;
+				}
+
+				{ // Upload buffer data
+					auto zipped = te::tuple_zip(
+						te::tie_tuple_elements(this->buffers),
+						std::tie(infos...)
+					);
+
+					te::tuple_for_each([](auto& tuple) {
+						auto& [buffer, maybeInfo] = tuple;
+						if (maybeInfo.has_value()) {
+							buffer.set(maybeInfo.value().data);
+						}
+						}, zipped);
+				} // End upload buffer data
+
+				size_t elementCount;
+				{
+					std::optional<size_t> count;
+					te::tuple_for_each([&](auto& buffer) {
+						if (buffer.divisor == 0) {
+							if (count.has_value()) {
+								assert(count.value() == buffer.size);
+							}
+							else {
+								count = buffer.size;
+							}
+						}
+						}, this->buffers);
+
+					if (!count.has_value()) {
+						assert(0);
+						return;
+					}
+					elementCount = count.value();
+				}
+
+				if (elementCount == 0) {
+					return;
+				}
+
+				Global<ogs::State>->setState(config);
+
+				auto bind = this->vao.bindScoped();
 				this->program.use();
 
-				auto targetUniforms = te::get_tie(this->uniforms);
-				auto storageUniforms = te::get_tie(uniforms_);
+				{ // Set uniforms
+					auto targetUniforms = te::get_tie(this->uniforms);
+					auto storageUniforms = te::get_tie(uniforms_);
 
-				auto zipped = te::tuple_zip(targetUniforms, storageUniforms);
+					auto zipped = te::tuple_zip(targetUniforms, storageUniforms);
 
-				auto unit = *LazyGlobal<int, description::TexturesBound>;
-				*unit = 0;
+					auto unit = *LazyGlobal<int, description::TexturesBound>;
+					*unit = 0;
 
-				te::tuple_for_each(
-					[](auto& t) {
-						auto& [target, storage] = t;
-						target.setFromOther(storage);
-					}, zipped
+					te::tuple_for_each(
+						[](auto& t) {
+							auto& [target, storage] = t;
+							target.setFromOther(storage);
+						}, zipped
+					);
+				} // End set uniforms
+
+				target.draw(
+					viewport,
+					[elementCount, instanceCount]() {
+						glDrawArraysInstanced(
+							GL_TRIANGLES,
+							0,
+							static_cast<GLsizei>(elementCount),
+							static_cast<GLsizei>(instanceCount)
+						);
+					}
 				);
 			}
 		};
@@ -381,8 +505,26 @@ struct Circle
 template<>
 struct render::TEMPLATES::RenderInfo<Circle> : TEMPLATES::RenderInfoBase<Circle>
 {
-	void addTest(float a, float b, float c) {
-		assert(0);
+	void addCircle(glm::vec4 rectangle, render::Color color) {
+		this->data.push_back({
+			.world = rectangle,
+			.color = color
+			});
+	}
+};
+
+struct Vertex2
+{
+	static constexpr auto member_count = 1;
+
+	glm::vec2 v;
+};
+
+template<>
+struct render::TEMPLATES::RenderInfo<Vertex2> : TEMPLATES::RenderInfoBase<Vertex2>
+{
+	void addVertex(glm::vec2 v) {
+		this->data.push_back({ v });
 	}
 };
 
@@ -398,4 +540,9 @@ struct Uniforms
 	render::UniformMatrix4f VP{ "VP" };
 };
 
-using CircleRenderer2 = render::TEMPLATES::Renderer<Circle, Uniforms>;
+using CircleRenderer2 = render::TEMPLATES::Renderer<
+	Uniforms,
+
+	render::ArrayBuffer<glm::vec2, 0>,
+	render::ArrayBuffer<Circle, 1>
+>;
