@@ -25,13 +25,3 @@ make_module(
 		GLEW
 		resource_data
 )
-
-add_executable(${MODULE_NAME}_test_exe Main.cpp)
-
-target_link_libraries(${MODULE_NAME}_test_exe
-	PUBLIC
-		${MODULE_NAME}
-		tepp
-		opengl32
-		shaders
-)
