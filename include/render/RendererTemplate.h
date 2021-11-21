@@ -18,6 +18,35 @@
 
 namespace render
 {
+
+	struct Vertex2
+	{
+		static constexpr auto member_count = 1;
+
+		glm::vec2 v;
+	};
+
+	struct Vertex3
+	{
+		static constexpr auto member_count = 1;
+
+		glm::vec3 v;
+	};
+
+	struct Vertex4
+	{
+		static constexpr auto member_count = 1;
+
+		glm::vec4 v;
+	};
+
+	struct Index
+	{
+		static constexpr auto member_count = 1;
+
+		uint16_t v;
+	};
+
 	template<class T, class phantom = void>
 	struct UniformBase
 	{
@@ -114,15 +143,33 @@ namespace render
 		glUniformMatrix4fv(this->location, 1, GL_FALSE, &other[0][0]);
 	}
 
-	namespace description
+	enum class BufferUsageHint
 	{
+		STREAM_DRAW,
+		STREAM_READ,
+		STREAM_COPY,
+		STATIC_DRAW,
+		STATIC_READ,
+		STATIC_COPY,
+		DYNAMIC_DRAW,
+		DYNAMIC_READ,
+		DYNAMIC_COPY,
+	};
 
-		template<class T>
-		struct BufferDescription
-		{
-
+	constexpr static GLenum convert(BufferUsageHint hint) {
+		constexpr GLenum lookup[] = {
+			GL_STREAM_DRAW,
+			GL_STREAM_READ,
+			GL_STREAM_COPY,
+			GL_STATIC_DRAW,
+			GL_STATIC_READ,
+			GL_STATIC_COPY,
+			GL_DYNAMIC_DRAW,
+			GL_DYNAMIC_READ,
+			GL_DYNAMIC_COPY,
 		};
 
+		return lookup[static_cast<size_t>(hint)];
 	}
 
 	template<class T, int divisor_>
@@ -131,7 +178,6 @@ namespace render
 		using value_type = T;
 		constexpr static int divisor = divisor_;
 
-		GLenum usageHint = GL_STREAM_DRAW;
 		GLuint ID = 0;
 		size_t size = 0;
 
@@ -145,8 +191,8 @@ namespace render
 			glDeleteBuffers(1, &this->ID);
 		}
 
-		void set(std::vector<T> const& data) {
-			this->setRaw(sizeof(T) * data.size(), data.data());
+		void set(std::vector<T> const& data, BufferUsageHint hint) {
+			this->setRaw(sizeof(T) * data.size(), data.data(), hint);
 		};
 
 		void bind(GLenum location) {
@@ -154,12 +200,12 @@ namespace render
 			glBindBuffer(location, this->ID);
 		}
 
-		void setRaw(size_t size_, void const* data) {
+		void setRaw(size_t size_, void const* data, BufferUsageHint hint) {
 			assert(this->ID != 0);
 			assert(size_ > 0);
-			this->size = size_;
+			this->size = size_ / sizeof(T);
 			glBindBuffer(GL_ARRAY_BUFFER, this->ID);
-			glBufferData(GL_ARRAY_BUFFER, size, data, this->usageHint);
+			glBufferData(GL_ARRAY_BUFFER, size_, data, convert(hint));
 		}
 
 		NO_COPY(ArrayBuffer);
@@ -287,7 +333,6 @@ namespace render
 			return BindScoped(this->ID);
 		}
 
-
 		VAO(std::tuple<Buffers...>& buffers) {
 			glGenVertexArrays(1, &this->ID);
 
@@ -323,226 +368,254 @@ namespace render
 				},
 				buffers);
 		}
+
+		VAO() = delete;
+		NO_COPY_MOVE(VAO);
+		~VAO() {
+			glDeleteVertexArrays(1, &this->ID);
+		}
 	};
 
-	template<class... Buffers>
-	VAO(Buffers...)->VAO<Buffers...>;
-
-
-	namespace TEMPLATES
+	template<class T>
+	struct RenderInfoBase
 	{
+		std::vector<T> data;
+
+		size_t getSize() const {
+			return this->data.size();
+		}
+
+		T* getData() const {
+			return this->data.data();
+		}
+	};
+
+	template<class T>
+	struct RenderInfoTemplate;
+
+	template<
+		class Uniforms,
+		class... Buffers
+	> struct Renderer
+	{
+		bwo::Program program;
+
+		std::tuple<Buffers...> buffers;
+		VAO<Buffers...> vao;
+
+		Uniforms uniforms;
+
+		Renderer(
+			bwo::Program::BufferGenerator vertexGenerator,
+			bwo::Program::BufferGenerator fragmentGenerator,
+			std::string_view description
+		) : program(vertexGenerator, fragmentGenerator, description),
+			vao(buffers) {
+
+			te::tuple_for_each(
+				[this](auto& t) {
+					t.init(this->program);
+				}, te::get_tie(this->uniforms));
+		}
+
 		template<class T>
-		struct RenderInfoBase
-		{
-			std::vector<T> data;
+		void setBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
+			constexpr auto enumerated_buffer_types = te::enumerate_in_list(
+				te::List<typename Buffers::value_type...>
+			);
 
-			size_t getSize() const {
-				return this->data.size();
-			}
+			constexpr auto same_types = te::filter(
+				[]<template<class...> class L, class S, auto I>(te::Type_t<L<S, te::detail::Value<I>>>) {
+				return te::Value<std::same_as<T, S>>;
+			}, enumerated_buffer_types);
 
-			T* getData() const {
-				return this->data.data();
-			}
-		};
+			static_assert(Getvalue(te::list_size(same_types)) != 0, "No buffer found with type T");
+			static_assert(Getvalue(te::list_size(same_types)) < 2, "Multiple buffers found with type T");
 
-		template<class T>
-		struct RenderInfo;
+			constexpr size_t I = std::tuple_element_t<1, std::tuple_element_t<0, Gettype(same_types)>>::value;
 
-		template<
-			class Uniforms,
-			class... Buffers
-		> struct Renderer
-		{
-			bwo::Program program;
+			this->setBuffer<I>(info, hint);
+		}
 
-			std::tuple<Buffers...> buffers;
-			VAO<Buffers...> vao;
+		template<size_t I>
+		void setBuffer(RenderInfoTemplate<std::tuple_element_t<I, std::tuple<typename Buffers::value_type...>>> const& info, BufferUsageHint hint) {
+			std::get<I>(this->buffers).set(info.data, hint);
+		}
 
-			Uniforms uniforms;
+		void render(
+			bwo::FrameBuffer& target,
+			glm::ivec4 viewport,
+			ogs::Configuration const& config,
+			Uniforms uniforms_,
+			te::optional_ref<RenderInfoTemplate<typename Buffers::value_type> const>... infos
+		) {
+			// Find instance count
+			size_t instanceCount;
+			{
+				bool valid = true;
+				std::optional<size_t> infoSize;
 
-			Renderer(
-				bwo::Program::BufferGenerator vertexGenerator,
-				bwo::Program::BufferGenerator fragmentGenerator,
-				std::string_view description
-			) : program(vertexGenerator, fragmentGenerator, description),
-				vao(buffers) {
+				auto zipped = te::tuple_zip(
+					te::tie_tuple_elements(this->buffers),
+					std::tie(infos...)
+				);
 
-				te::tuple_for_each(
-					[this](auto& t) {
-						t.init(this->program);
-					}, te::get_tie(this->uniforms));
-			}
-
-			void render(
-				bwo::FrameBuffer& target,
-				glm::ivec4 viewport,
-				ogs::Configuration const& config,
-				Uniforms uniforms_,
-				te::optional_ref<RenderInfo<typename Buffers::value_type> const>... infos
-			) {
-				size_t instanceCount;
-				{
-					bool valid = true;
-					std::optional<size_t> infoSize;
-
-					auto zipped = te::tuple_zip(
-						te::tie_tuple_elements(this->buffers),
-						std::tie(infos...)
-					);
-
-					te::tuple_for_each([&](auto& tuple) {
-						auto& [buffer, maybeInfo] = tuple;
-						if (buffer.divisor == 0) {
-							return;
-						}
-
-						if (!infoSize.has_value()) {
-							infoSize = maybeInfo.value().getSize();
-						}
-						else if (infoSize.value() != maybeInfo.value().getSize()) {
-							valid = false;
-						}
-						}, zipped);
+				te::tuple_for_each([&](auto& tuple) {
+					auto& [buffer, maybeInfo] = tuple;
+					if (buffer.divisor == 0) {
+						return;
+					}
 
 					if (!infoSize.has_value()) {
-						return;
+						infoSize = maybeInfo.value().getSize();
 					}
+					else if (infoSize.value() != maybeInfo.value().getSize()) {
+						valid = false;
+					}
+					}, zipped);
 
-					instanceCount = infoSize.value();
-
-					assert(valid);
-				}
-				if (instanceCount == 0) {
+				if (!infoSize.has_value()) {
 					return;
 				}
 
-				{ // Upload buffer data
-					auto zipped = te::tuple_zip(
-						te::tie_tuple_elements(this->buffers),
-						std::tie(infos...)
-					);
+				instanceCount = infoSize.value();
 
-					te::tuple_for_each([](auto& tuple) {
-						auto& [buffer, maybeInfo] = tuple;
-						if (maybeInfo.has_value()) {
-							buffer.set(maybeInfo.value().data);
-						}
-						}, zipped);
-				} // End upload buffer data
-
-				size_t elementCount;
-				{
-					std::optional<size_t> count;
-					te::tuple_for_each([&](auto& buffer) {
-						if (buffer.divisor == 0) {
-							if (count.has_value()) {
-								assert(count.value() == buffer.size);
-							}
-							else {
-								count = buffer.size;
-							}
-						}
-						}, this->buffers);
-
-					if (!count.has_value()) {
-						assert(0);
-						return;
-					}
-					elementCount = count.value();
-				}
-
-				if (elementCount == 0) {
-					return;
-				}
-
-				Global<ogs::State>->setState(config);
-
-				auto bind = this->vao.bindScoped();
-				this->program.use();
-
-				{ // Set uniforms
-					auto targetUniforms = te::get_tie(this->uniforms);
-					auto storageUniforms = te::get_tie(uniforms_);
-
-					auto zipped = te::tuple_zip(targetUniforms, storageUniforms);
-
-					auto unit = *LazyGlobal<int, description::TexturesBound>;
-					*unit = 0;
-
-					te::tuple_for_each(
-						[](auto& t) {
-							auto& [target, storage] = t;
-							target.setFromOther(storage);
-						}, zipped
-					);
-				} // End set uniforms
-
-				target.draw(
-					viewport,
-					[elementCount, instanceCount]() {
-						glDrawArraysInstanced(
-							GL_TRIANGLES,
-							0,
-							static_cast<GLsizei>(elementCount),
-							static_cast<GLsizei>(instanceCount)
-						);
-					}
-				);
+				assert(valid);
 			}
-		};
-	}
+			if (instanceCount == 0) {
+				return;
+			}
+			// End find instanc ecount
+
+			{ // Upload buffer data
+				auto zipped = te::tuple_zip(
+					te::tie_tuple_elements(this->buffers),
+					std::tie(infos...)
+				);
+
+				te::tuple_for_each([](auto& tuple) {
+					auto& [buffer, maybeInfo] = tuple;
+					if (maybeInfo.has_value()) {
+						buffer.set(maybeInfo.value().data, BufferUsageHint::STREAM_DRAW);
+					}
+					}, zipped);
+			} // End upload buffer data
+
+			// Find amount of elements in non static buffers
+			size_t elementCount;
+			{
+				std::optional<size_t> count;
+				te::tuple_for_each([&](auto& buffer) {
+					if (buffer.divisor == 0) {
+						if (count.has_value()) {
+							assert(count.value() == buffer.size);
+						}
+						else {
+							count = buffer.size;
+						}
+					}
+					}, this->buffers);
+
+				if (!count.has_value()) {
+					assert(0);
+					return;
+				}
+				elementCount = count.value();
+			}
+
+			if (elementCount == 0) {
+				return;
+			}
+			// End find amount of elements in non static buffers
+
+			Global<ogs::State>->setState(config);
+
+			auto bind = this->vao.bindScoped();
+			this->program.use();
+
+			{ // Set uniforms
+				auto targetUniforms = te::get_tie(this->uniforms);
+				auto storageUniforms = te::get_tie(uniforms_);
+
+				auto zipped = te::tuple_zip(targetUniforms, storageUniforms);
+
+				auto unit = *LazyGlobal<int, description::TexturesBound>;
+				*unit = 0;
+
+				te::tuple_for_each(
+					[](auto& t) {
+						auto& [target, storage] = t;
+						target.setFromOther(storage);
+					}, zipped
+				);
+			} // End set uniforms
+
+			target.draw(
+				viewport,
+				[elementCount, instanceCount]() {
+					glDrawArraysInstanced(
+						GL_TRIANGLES,
+						0,
+						static_cast<GLsizei>(elementCount),
+						static_cast<GLsizei>(instanceCount)
+					);
+				}
+			);
+		}
+
+		Renderer() = delete;
+		NO_COPY_MOVE(Renderer);
+		~Renderer() = default;
+	};
+
+	struct Circle
+	{
+		static constexpr auto member_count = 2;
+
+		glm::vec4 world;
+		render::Color color;
+	};
+
+	template<>
+	struct render::RenderInfoTemplate<Circle> : RenderInfoBase<Circle>
+	{
+		void addCircle(glm::vec4 rectangle, render::Color color) {
+			this->data.push_back({
+				.world = rectangle,
+				.color = color
+				});
+		}
+	};
+
+	template<>
+	struct render::RenderInfoTemplate<Vertex2> : RenderInfoBase<Vertex2>
+	{
+		void addVertex(glm::vec2 v) {
+			this->data.push_back({ v });
+		}
+	};
+
+	template<>
+	struct render::RenderInfoTemplate<Vertex3> : RenderInfoBase<Vertex3>
+	{
+		void addVertex(glm::vec3 v) {
+			this->data.push_back({ v });
+		}
+	};
+
+	template<>
+	struct render::RenderInfoTemplate<Vertex4> : RenderInfoBase<Vertex4>
+	{
+		void addVertex(glm::vec4 v) {
+			this->data.push_back({ v });
+		}
+	};
+
+	template<>
+	struct render::RenderInfoTemplate<Index> : RenderInfoBase<Index>
+	{
+		void addIndex(uint16_t i) {
+			this->data.push_back({ i });
+		}
+	};
 }
-
-
-struct Circle
-{
-	static constexpr auto member_count = 2;
-
-	glm::vec4 world;
-	render::Color color;
-};
-
-template<>
-struct render::TEMPLATES::RenderInfo<Circle> : TEMPLATES::RenderInfoBase<Circle>
-{
-	void addCircle(glm::vec4 rectangle, render::Color color) {
-		this->data.push_back({
-			.world = rectangle,
-			.color = color
-			});
-	}
-};
-
-struct Vertex2
-{
-	static constexpr auto member_count = 1;
-
-	glm::vec2 v;
-};
-
-template<>
-struct render::TEMPLATES::RenderInfo<Vertex2> : TEMPLATES::RenderInfoBase<Vertex2>
-{
-	void addVertex(glm::vec2 v) {
-		this->data.push_back({ v });
-	}
-};
-
-struct Uniforms
-{
-	static constexpr auto member_count = 6;
-
-	render::Uniform1f depth{ "depth" };
-	render::Uniform1f borderSize{ "borderSize" };
-	render::UniformTexture2D texture_t{ "texture_t" };
-	render::Uniform1f texturePixelSize{ "texturePixelSize" };
-	render::Uniform2f worldPixelSize{ "worldPixelSize" };
-	render::UniformMatrix4f VP{ "VP" };
-};
-
-using CircleRenderer2 = render::TEMPLATES::Renderer<
-	Uniforms,
-
-	render::ArrayBuffer<glm::vec2, 0>,
-	render::ArrayBuffer<Circle, 1>
->;
