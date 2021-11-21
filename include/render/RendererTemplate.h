@@ -271,7 +271,7 @@ namespace render
 				static_assert(size == 1);
 				glVertexAttribPointer(
 					state.index,
-					static_cast<GLint>(size),
+					static_cast<GLint>(4),
 					GL_UNSIGNED_BYTE,
 					GL_TRUE,
 					state.stride,
@@ -301,6 +301,7 @@ namespace render
 			detail::applyVertexInfo<float, 4>::run(state);
 		}
 		else if constexpr (std::same_as<T, Color>) {
+			rand();
 			detail::applyVertexInfo<Color, 1>::run(state);
 		}
 		else {
