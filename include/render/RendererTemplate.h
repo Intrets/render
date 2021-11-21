@@ -568,25 +568,6 @@ namespace render
 		~Renderer() = default;
 	};
 
-	struct Circle
-	{
-		static constexpr auto member_count = 2;
-
-		glm::vec4 world;
-		render::Color color;
-	};
-
-	template<>
-	struct render::RenderInfoTemplate<Circle> : RenderInfoBase<Circle>
-	{
-		void addCircle(glm::vec4 rectangle, render::Color color) {
-			this->data.push_back({
-				.world = rectangle,
-				.color = color
-				});
-		}
-	};
-
 	template<>
 	struct render::RenderInfoTemplate<Vertex2> : RenderInfoBase<Vertex2>
 	{
