@@ -301,7 +301,6 @@ namespace render
 			detail::applyVertexInfo<float, 4>::run(state);
 		}
 		else if constexpr (std::same_as<T, Color>) {
-			rand();
 			detail::applyVertexInfo<Color, 1>::run(state);
 		}
 		else {
@@ -381,6 +380,10 @@ namespace render
 	struct RenderInfoBase
 	{
 		std::vector<T> data;
+
+		void add(T&& t) {
+			this->data.push_back(std::forward<T>(t));
+		}
 
 		size_t getSize() const {
 			return this->data.size();
