@@ -466,7 +466,7 @@ namespace render
 
 				te::tuple_for_each([&](auto& tuple) {
 					auto& [buffer, maybeInfo] = tuple;
-					if (buffer.divisor == 0) {
+					if (buffer.divisor == 0 || !maybeInfo.has_value()) {
 						return;
 					}
 
