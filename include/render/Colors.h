@@ -54,7 +54,7 @@ namespace render
 	}
 
 	using converterFunctionType = Color(*)(Color);
-	constexpr converterFunctionType converter = id;
+	constexpr converterFunctionType converter = toLinear;
 
 	static constexpr Color red = converter({ 0xFF0000FF });
 	static constexpr Color green = converter({ 0xFF00FF00 });

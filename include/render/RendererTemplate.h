@@ -320,7 +320,7 @@ namespace render
 			detail::applyVertexInfo<Color, 1>::run(state);
 		}
 		else {
-			static_assert(0);
+			//static_assert(0);
 		}
 	}
 
@@ -361,9 +361,9 @@ namespace render
 			te::tuple_for_each(
 				[&](auto& buffer) {
 					using T = std::remove_cvref_t<decltype(buffer)>;
-					using members = te::get_members_t<T::value_type>;
+					using members = te::get_members_t<typename T::value_type>;
 
-					state.stride = sizeof(T::value_type);
+					state.stride = sizeof(typename T::value_type);
 					state.offset = 0;
 					state.divisor = buffer.divisor;
 
