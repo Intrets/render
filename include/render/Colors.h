@@ -21,6 +21,7 @@
 #include <string>
 #include <concepts>
 #include <bit>
+#include <array>
 
 #include "SRGBConversion.h"
 
@@ -30,6 +31,10 @@ namespace render
 	{
 		uint32_t c;
 	};
+
+	constexpr Color rgb(uint32_t r, uint32_t g, uint32_t b) {
+		return { r | (g << 8) | (b << 16) | 0xFF000000 };
+	}
 
 	template<class T>
 	constexpr T id(T t) { return t; };
@@ -54,7 +59,7 @@ namespace render
 	}
 
 	using converterFunctionType = Color(*)(Color);
-	constexpr converterFunctionType converter = toLinear;
+	constexpr converterFunctionType converter = id;
 
 	static constexpr Color red = converter({ 0xFF0000FF });
 	static constexpr Color green = converter({ 0xFF00FF00 });
@@ -69,6 +74,48 @@ namespace render
 	static constexpr Color nice_green = converter({ 0xFF00CA1D });
 	static constexpr Color nice_red = converter({ 0xFF2525E5 });
 	static constexpr Color orange = converter({ 0xFF00B2FF });
+
+	static constexpr std::array<Color, 5> nice_colors = {
+		nice_blue,
+		nice_darkblue,
+		nice_green,
+		nice_red,
+		orange,
+	};
+
+	static constexpr std::array<Color, 30> reds_and_purples = {
+		converter(rgb(205,  92,  92)),
+		converter(rgb(178,  34,  34)),
+		converter(rgb(165,  42,  42)),
+		converter(rgb(233, 150, 122)),
+		converter(rgb(250, 128, 114)),
+		converter(rgb(255, 160, 122)),
+		converter(rgb(255, 127,  80)),
+		converter(rgb(240, 128, 128)),
+		converter(rgb(255,  99,  71)),
+		converter(rgb(255,  69,   0)),
+		converter(rgb(255,   0,   0)),
+		converter(rgb(255, 105, 180)),
+		converter(rgb(255,  20, 147)),
+		converter(rgb(255, 192, 203)),
+		converter(rgb(255, 182, 193)),
+		converter(rgb(219, 112, 147)),
+		converter(rgb(176,  48,  96)),
+		converter(rgb(199,  21, 133)),
+		converter(rgb(208,  32, 144)),
+		converter(rgb(255,   0, 255)),
+		converter(rgb(238, 130, 238)),
+		converter(rgb(221, 160, 221)),
+		converter(rgb(218, 112, 214)),
+		converter(rgb(186,  85, 211)),
+		converter(rgb(153,  50, 204)),
+		converter(rgb(148,   0, 211)),
+		converter(rgb(138,  43, 226)),
+		converter(rgb(160,  32, 240)),
+		converter(rgb(147, 112, 219)),
+		converter(rgb(216, 191, 216)),
+	};
+
 
 	template<class T>
 	Color uniqueColor(T val) {
