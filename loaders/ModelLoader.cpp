@@ -20,7 +20,7 @@
 
 #include "loaders/ModelLoader.h"
 
-#include <GL/glew.h>
+#include <wrangled_gl/wrangled_gl.h>
 #include <GLFW/glfw3.h>
 
 #include <vector>

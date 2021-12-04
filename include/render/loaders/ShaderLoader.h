@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <GL/glew.h>
+#include <wrangled_gl/wrangled_gl.h>
 
 namespace render
 {

@@ -19,7 +19,7 @@
 #include <vector>
 #include <cassert>
 
-#include <GL/glew.h>
+#include <wrangled_gl/wrangled_gl.h>
 
 #include <tepp/dest.h>
 

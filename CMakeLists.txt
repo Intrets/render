@@ -38,6 +38,6 @@ make_module(
 		WGLM
 		misc
 		gli
-		GLEW
+		wrangled_gl
 		resource_data
 )
