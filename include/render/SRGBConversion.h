@@ -22,13 +22,13 @@
 
 constexpr uint8_t toLinear(uint8_t x) {
 	if (!std::is_constant_evaluated()) {
-		const float v = x / 255.0;
+		const float v = x / 255.0f;
 
-		if (v <= 0.04045) {
-			return (v / 12.92) * 255.0 + 0.5;
+		if (v <= 0.04045f) {
+			return static_cast<uint8_t>((v / 12.92f) * 255.0f + 0.5f);
 		}
 		else {
-			return std::pow((v + 0.055) / 1.055, 2.4) * 255.0 + 0.5;
+			return static_cast<uint8_t>(std::pow((v + 0.055f) / 1.055f, 2.4f) * 255.0f + 0.5f);
 		}
 	}
 	else {
