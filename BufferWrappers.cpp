@@ -113,9 +113,9 @@ namespace render
 		deleteProgram(*this);
 		this->ID = LoadShaders(
 			vertBuffer->getData<char>(),
-			vertBuffer->getSize<char>(),
+			static_cast<GLint>(vertBuffer->getSize<char>()),
 			fragBuffer->getData<char>(),
-			fragBuffer->getSize<char>()
+			static_cast<GLint>(fragBuffer->getSize<char>())
 		);
 		addProgram(*this);
 
@@ -127,7 +127,7 @@ namespace render
 		char const* frag_raw, size_t frag_size,
 		std::string const& description_
 	) {
-		this->ID = LoadShaders(vert_raw, vert_size, frag_raw, frag_size);
+		this->ID = LoadShaders(vert_raw, static_cast<GLint>(vert_size), frag_raw, static_cast<GLint>(frag_size));
 		this->description = description_;
 		addProgram(*this);
 	}

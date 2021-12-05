@@ -69,21 +69,22 @@ namespace render
 		T storage;
 		std::string name;
 
-		GLuint location = -1;
+		GLuint location = std::numeric_limits<GLuint>::max();
+		static constexpr inline GLuint invalid_location = std::numeric_limits<GLuint>::max();
 
 		UniformBase(T val) : storage(val) {}
 		UniformBase(std::string_view name_) : name(name_) {}
 
 		void init(bwo::Program const& program) {
 			assert(!this->name.empty());
-			assert(this->location == -1);
+			assert(this->location == invalid_location);
 			this->location = glGetUniformLocation(program.ID, this->name.c_str());
-			assert(this->location != -1);
+			assert(this->location != invalid_location);
 		};
 
 		void setFromOther(UniformBase<T, phantom> const& other) {
-			assert(this->location != -1);
-			assert(other.location == -1);
+			assert(this->location != invalid_location);
+			assert(other.location == invalid_location);
 
 			setFromOtherImpl(other.storage);
 		}
@@ -482,15 +483,20 @@ namespace render
 
 				te::tuple_for_each([&](auto& tuple) {
 					auto& [buffer, maybeInfo] = tuple;
-					if (buffer.divisor == 0 || !maybeInfo.has_value()) {
+					if constexpr (buffer.divisor == 0) {
 						return;
 					}
+					else {
+						if (!maybeInfo.has_value()) {
+							return;
+						}
 
-					if (!infoSize.has_value()) {
-						infoSize = maybeInfo.value().getSize();
-					}
-					else if (infoSize.value() != maybeInfo.value().getSize()) {
-						valid = false;
+						if (!infoSize.has_value()) {
+							infoSize = maybeInfo.value().getSize();
+						}
+						else if (infoSize.value() != maybeInfo.value().getSize()) {
+							valid = false;
+						}
 					}
 					}, zipped);
 
@@ -526,7 +532,7 @@ namespace render
 			{
 				std::optional<size_t> count;
 				te::tuple_for_each([&](auto& buffer) {
-					if (buffer.divisor == 0) {
+					if constexpr (buffer.divisor == 0) {
 						if (count.has_value()) {
 							assert(count.value() == buffer.size);
 						}
