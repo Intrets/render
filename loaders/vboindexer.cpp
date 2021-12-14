@@ -111,7 +111,7 @@ namespace render
 		std::map<PackedVertex, unsigned short>& VertexToOutIndex,
 		unsigned short& result
 	) {
-		std::map<PackedVertex, unsigned short>::iterator it = VertexToOutIndex.find(packed);
+		std::map<PackedVertex, unsigned short>::const_iterator it = VertexToOutIndex.find(packed);
 		if (it == VertexToOutIndex.end()) {
 			return false;
 		}

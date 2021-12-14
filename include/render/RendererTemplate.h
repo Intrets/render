@@ -22,6 +22,7 @@
 #include <wrangled_gl/wrangled_gl.h>
 
 #include <tepp/dest.h>
+#include <tepp/enum_bitflags.h>
 
 #include <wglm/glm.hpp>
 
@@ -218,6 +219,10 @@ namespace render
 		}
 
 		void setRaw(size_t size_, void const* data, BufferUsageHint hint) {
+			if (size_ == 0) {
+				return;
+			}
+
 			assert(this->ID != 0);
 			assert(size_ > 0);
 			this->size = size_ / sizeof(T);
@@ -414,8 +419,38 @@ namespace render
 	template<class T>
 	struct RenderInfoTemplate;
 
+	enum RenderMode
+	{
+		TRIANGLE = 1 << 0,
+		POINT = 1 << 1,
+		LINE = 1 << 2,
+		LINESTRIP = 1 << 3,
+	};
+
+	static constexpr auto getRenderMode(RenderMode mode) {
+		switch (mode) {
+			case render::TRIANGLE:
+				return GL_TRIANGLES;
+				break;
+			case render::POINT:
+				return GL_POINTS;
+				break;
+			case render::LINE:
+				return GL_LINES;
+				break;
+			case render::LINESTRIP:
+				return GL_LINE_STRIP;
+				break;
+			default:
+				assert(0);
+				return GL_TRIANGLES;
+				break;
+		}
+	}
+
 	template<
 		class Uniforms,
+		int mode,
 		class... Buffers
 	> struct Renderer
 	{
@@ -433,10 +468,12 @@ namespace render
 		) : program(vertexGenerator, fragmentGenerator, description),
 			vao(buffers) {
 
-			te::tuple_for_each(
-				[this](auto& t) {
-					t.init(this->program);
-				}, te::get_tie(this->uniforms));
+			if constexpr (Uniforms::member_count > 0) {
+				te::tuple_for_each(
+					[this](auto& t) {
+						t.init(this->program);
+					}, te::get_tie(this->uniforms));
+			}
 		}
 
 		template<class T>
@@ -501,17 +538,15 @@ namespace render
 					}, zipped);
 
 				if (!infoSize.has_value()) {
-					return;
+					instanceCount = 0;
 				}
-
-				instanceCount = infoSize.value();
+				else {
+					instanceCount = infoSize.value();
+				}
 
 				assert(valid);
 			}
-			if (instanceCount == 0) {
-				return;
-			}
-			// End find instanc ecount
+			// End find instance count
 
 			{ // Upload buffer data
 				auto zipped = te::tuple_zip(
@@ -576,23 +611,60 @@ namespace render
 				);
 			} // End set uniforms
 
-			target.draw(
-				viewport,
-				[elementCount, instanceCount]() {
-					glDrawArraysInstanced(
-						GL_TRIANGLES,
-						0,
-						static_cast<GLsizei>(elementCount),
-						static_cast<GLsizei>(instanceCount)
-					);
-				}
-			);
+			if (instanceCount == 0) {
+				te::for_each_type(
+					[&]<auto m>(te::Value_t<m>) {
+					if constexpr ((mode & m) == m) {
+						target.draw(
+							viewport,
+							[elementCount]() {
+								glDrawArrays(
+									getRenderMode(m),
+									0,
+									static_cast<GLsizei>(elementCount)
+								);
+							}
+						);
+					}
+				}, te::value_list<RenderMode::TRIANGLE, RenderMode::POINT, RenderMode::LINE>);
+			}
+			else {
+				te::for_each_type(
+					[&]<auto m>(te::Value_t<m>) {
+					if constexpr ((mode & m) == m) {
+						target.draw(
+							viewport,
+							[elementCount, instanceCount]() {
+								glDrawArraysInstanced(
+									getRenderMode(m),
+									0,
+									static_cast<GLsizei>(elementCount),
+									static_cast<GLsizei>(instanceCount)
+								);
+							}
+						);
+					}
+				}, te::value_list<RenderMode::TRIANGLE, RenderMode::POINT, RenderMode::LINESTRIP>);
+			}
 		}
 
 		Renderer() = delete;
 		NO_COPY_MOVE(Renderer);
 		~Renderer() = default;
 	};
+
+	template<class Uniforms, class... Buffers>
+	using TriRenderer = Renderer<Uniforms, RenderMode::TRIANGLE, Buffers...>;
+
+	template<class Uniforms, class... Buffers>
+	using PointRenderer = Renderer<Uniforms, RenderMode::POINT, Buffers...>;
+
+	template<class Uniforms, class... Buffers>
+	using LineRenderer = Renderer<Uniforms, RenderMode::LINE, Buffers...>;
+
+	template<class Uniforms, class... Buffers>
+	using LinePointRenderer = Renderer<Uniforms, RenderMode::LINESTRIP, Buffers...>;
+
 
 	template<>
 	struct render::RenderInfoTemplate<Vertex2> : RenderInfoBase<Vertex2>
