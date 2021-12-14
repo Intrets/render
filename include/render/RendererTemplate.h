@@ -427,7 +427,7 @@ namespace render
 		LINESTRIP = 1 << 3,
 	};
 
-	static constexpr auto getRenderMode(RenderMode mode) {
+	static constexpr auto getRenderMode(int mode) {
 		switch (mode) {
 			case render::TRIANGLE:
 				return GL_TRIANGLES;
@@ -447,6 +447,8 @@ namespace render
 				break;
 		}
 	}
+
+	static constexpr auto all_render_modes = te::value_list<1, 2, 4, 8>;
 
 	template<
 		class Uniforms,
@@ -626,7 +628,7 @@ namespace render
 							}
 						);
 					}
-				}, te::value_list<RenderMode::TRIANGLE, RenderMode::POINT, RenderMode::LINE>);
+				}, all_render_modes);
 			}
 			else {
 				te::for_each_type(
@@ -644,7 +646,7 @@ namespace render
 							}
 						);
 					}
-				}, te::value_list<RenderMode::TRIANGLE, RenderMode::POINT, RenderMode::LINESTRIP>);
+				}, all_render_modes);
 			}
 		}
 
