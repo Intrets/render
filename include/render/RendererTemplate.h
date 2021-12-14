@@ -407,6 +407,10 @@ namespace render
 			this->data.push_back(std::forward<T>(t));
 		}
 
+		void add(T const& t) {
+			this->data.push_back(t);
+		}
+
 		size_t getSize() const {
 			return this->data.size();
 		}
