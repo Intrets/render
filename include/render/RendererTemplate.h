@@ -514,10 +514,10 @@ namespace render
 			te::optional_ref<RenderInfoTemplate<typename Buffers::value_type> const>... infos
 		) {
 			// Find instance count
-			size_t instanceCount;
+			int instanceCount;
 			{
 				bool valid = true;
-				std::optional<size_t> infoSize;
+				std::optional<int> infoSize;
 
 				auto zipped = te::tuple_zip(
 					te::tie_tuple_elements(this->buffers),
@@ -535,7 +535,7 @@ namespace render
 						}
 
 						if (!infoSize.has_value()) {
-							infoSize = maybeInfo.value().getSize();
+							infoSize = static_cast<int>(maybeInfo.value().getSize());
 						}
 						else if (infoSize.value() != maybeInfo.value().getSize()) {
 							valid = false;
@@ -544,7 +544,7 @@ namespace render
 					}, zipped);
 
 				if (!infoSize.has_value()) {
-					instanceCount = 0;
+					instanceCount = -1;
 				}
 				else {
 					instanceCount = infoSize.value();
@@ -617,7 +617,7 @@ namespace render
 				);
 			} // End set uniforms
 
-			if (instanceCount == 0) {
+			if (instanceCount == -1) {
 				te::for_each_type(
 					[&]<auto m>(te::Value_t<m>) {
 					if constexpr ((mode & m) == m) {
@@ -634,7 +634,7 @@ namespace render
 					}
 				}, all_render_modes);
 			}
-			else {
+			else if (instanceCount > 0) {
 				te::for_each_type(
 					[&]<auto m>(te::Value_t<m>) {
 					if constexpr ((mode & m) == m) {
