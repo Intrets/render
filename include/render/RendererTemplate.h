@@ -452,7 +452,7 @@ namespace render
 		}
 	}
 
-	static constexpr auto all_render_modes = te::value_list<1, 2, 4, 8>;
+	static constexpr auto all_render_modes = te::value_list<render::TRIANGLE, render::POINT, render::LINE, render::LINESTRIP>;
 
 	template<
 		class Uniforms,
