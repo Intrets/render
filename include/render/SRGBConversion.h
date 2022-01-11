@@ -289,6 +289,7 @@ constexpr uint8_t toLinear(uint8_t x) {
 			case 253: return 250;
 			case 254: return 253;
 			case 255: return 255;
+			default: return 0;
 		}
 	}
 }

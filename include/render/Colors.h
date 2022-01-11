@@ -42,10 +42,10 @@ namespace render
 	constexpr Color toLinear(Color other) {
 		struct H
 		{
-			uint8_t a;
-			uint8_t b;
-			uint8_t g;
 			uint8_t r;
+			uint8_t g;
+			uint8_t b;
+			uint8_t a;
 		};
 
 		H h = std::bit_cast<H>(other);
@@ -74,6 +74,13 @@ namespace render
 	static constexpr Color nice_green = converter({ 0xFF00CA1D });
 	static constexpr Color nice_red = converter({ 0xFF2525E5 });
 	static constexpr Color orange = converter({ 0xFF00B2FF });
+	static constexpr Color light_gray = converter({ 0xFF404040 });
+	static constexpr Color gray = converter({ 0xFF808080 });
+	static constexpr Color dark_gray = converter({ 0xFFBFBFBF });
+	static constexpr Color gray_red = converter({ 0xFF404080 });
+	static constexpr Color gray_green = converter({ 0xFF408040 });
+	static constexpr Color gray_blue = converter({ 0xFF804040 });
+
 
 	static constexpr std::array<Color, 5> nice_colors = {
 		nice_blue,
