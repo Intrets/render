@@ -1,5 +1,5 @@
 // render - A C++ OpenGL library
-// Copyright (C) 2021  Intrets
+// Copyright (C) 2022  Intrets
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#include "include\render\BufferWrappers.h"
 #include "BufferWrappers.h"
 
 #include <fstream>
@@ -34,11 +33,6 @@
 namespace render
 {
 	std::unordered_map<int32_t, bwo::Program*> bwo::Program::refs;
-
-	int32_t bwo::VAO_impl::Stride = 0;
-	int32_t bwo::VAO_impl::Attribute = 0;
-	int32_t bwo::VAO_impl::Divisor = 0;
-	uintptr_t bwo::VAO_impl::Offset = 0;
 
 	std::string bwo::Program::listAll() {
 		std::stringstream out;
