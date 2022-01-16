@@ -26,6 +26,8 @@
 
 #include <wglm/glm.hpp>
 
+#include <misc/Logger.h>
+
 #include <mem/LazyGlobal.h>
 #include <mem/Global.h>
 
@@ -73,8 +75,10 @@ namespace render
 		GLuint location = std::numeric_limits<GLuint>::max();
 		static constexpr inline GLuint invalid_location = std::numeric_limits<GLuint>::max();
 
-		UniformBase(T val) : storage(val) {}
-		UniformBase(std::string_view name_) : name(name_) {}
+		UniformBase(T val) : storage(val) {
+		}
+		UniformBase(std::string_view name_) : name(name_) {
+		}
 
 		void init(bwo::Program const& program) {
 			assert(!this->name.empty());
@@ -375,13 +379,10 @@ namespace render
 
 					buffer.bind(GL_ARRAY_BUFFER);
 
+					logger->acquire()->log(Logger::Level::info, "new attribute group\n");
 					te::for_each_type([&]<class T>(te::Type_t<T>) {
-						std::cout << "   new attribute\n";
-						std::cout
-							<< " attribute: " << state.index
-							<< " size: " << sizeof(T)
-							<< " stride: " << state.stride
-							<< " offset: " << state.offset << "\n";
+						logger->acquire()->log(Logger::Level::info,
+							"new attribute {}, size {}, stride {}, offset {}\n", state.index, sizeof(T), state.stride, state.offset);
 
 						applyVertexInfo<T>(state);
 					}, te::Type<members>);

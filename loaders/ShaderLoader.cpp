@@ -32,10 +32,12 @@ using namespace std;
 #include <stdlib.h>
 #include <string.h>
 
+#include <misc/Logger.h>
+
 namespace render
 {
 	GLuint LoadShaders(const char* vertex_raw, GLint vertex_size, const char* fragment_raw, GLint fragment_size) {
-		printf("--- Compiling Shaders ---\n");
+		logger->acquire()->log(Logger::Level::info, "Compiling Shaders\n");
 
 		// Create the shaders
 		GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
@@ -54,7 +56,7 @@ namespace render
 		if (InfoLogLength > 0) {
 			std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
 			glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-			printf("%s\n", &VertexShaderErrorMessage[0]);
+			logger->acquire()->log(Logger::Level::error, "Vertex shader error: {}", &VertexShaderErrorMessage[0]);
 		}
 
 		// Compile Fragment Shader
@@ -67,11 +69,11 @@ namespace render
 		if (InfoLogLength > 0) {
 			std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
 			glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-			printf("%s\n", &FragmentShaderErrorMessage[0]);
+			logger->acquire()->log(Logger::Level::error, "Fragment shader error: {}", &FragmentShaderErrorMessage[0]);
 		}
 
 		// Link the program
-		printf("Linking program\n");
+		logger->acquire()->log(Logger::Level::info, "Linking program\n");
 		GLuint ProgramID = glCreateProgram();
 		glAttachShader(ProgramID, VertexShaderID);
 		glAttachShader(ProgramID, FragmentShaderID);
@@ -83,7 +85,7 @@ namespace render
 		if (InfoLogLength > 0) {
 			std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
 			glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-			printf("%s\n", &ProgramErrorMessage[0]);
+			logger->acquire()->log(Logger::Level::error, "Program error: {}", &ProgramErrorMessage[0]);
 		}
 
 		glDetachShader(ProgramID, VertexShaderID);
@@ -92,7 +94,7 @@ namespace render
 		glDeleteShader(VertexShaderID);
 		glDeleteShader(FragmentShaderID);
 
-		printf("Progam ID: %d\n", ProgramID);
+		logger->acquire()->log(Logger::Level::info, "Program ID: {}\n", ProgramID);
 
 		return ProgramID;
 	}

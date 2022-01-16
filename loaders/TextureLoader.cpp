@@ -28,6 +28,8 @@
 
 #include <wrangled_gl/wrangled_gl.h>
 
+#include <misc/Logger.h>
+
 #include <iostream>
 
 #if defined(COMPILER_CLANGCL) || defined(COMPILER_CLANG)
@@ -129,7 +131,7 @@ namespace render
 	bwo::Texture2D load2DTexture(std::string const Filename) {
 		gli::texture Texture = gli::load(Filename);
 		if (Texture.empty()) {
-			std::cerr << "Failed to load file: " << Filename << '\n';
+			logger->acquire()->log(Logger::Level::error, "Failed to load file {}\n", Filename);
 			return 0;
 		}
 
@@ -144,7 +146,7 @@ namespace render
 		gli::texture Texture = gli::load_dds(data, size);
 
 		if (Texture.empty()) {
-			std::cerr << "Failed to load texture from raw data.";
+			logger->acquire()->log(Logger::Level::error, "Failed to load texture from raw data of size {}\n", size);
 			return 0;
 		}
 

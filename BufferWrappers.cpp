@@ -21,8 +21,12 @@
 #include <sstream>
 
 #include <mem/Global.h>
+
 #include <misc/PathManager.h>
+#include <misc/Logger.h>
+
 #include <render/loaders/ShaderLoader.h>
+
 #include <resource_data/ReadFile.h>
 
 #include "GLStateWrapper.h"
@@ -111,6 +115,8 @@ namespace render
 		auto const& vertBuffer = maybeVertBuffer.value();
 
 		deleteProgram(*this);
+		logger->acquire()->log(Logger::Level::status, "Refreshing shaders of Program {}\n", this->description);
+
 		this->ID = LoadShaders(
 			vertBuffer->getData<char>(),
 			static_cast<GLint>(vertBuffer->getSize<char>()),
@@ -127,8 +133,9 @@ namespace render
 		char const* frag_raw, size_t frag_size,
 		std::string const& description_
 	) {
-		this->ID = LoadShaders(vert_raw, static_cast<GLint>(vert_size), frag_raw, static_cast<GLint>(frag_size));
 		this->description = description_;
+		logger->acquire()->log(Logger::Level::status, "Creating Program {}\n", this->description);
+		this->ID = LoadShaders(vert_raw, static_cast<GLint>(vert_size), frag_raw, static_cast<GLint>(frag_size));
 		addProgram(*this);
 	}
 
@@ -143,22 +150,24 @@ namespace render
 			return readFile(frag_path);
 		};
 
+		this->description = description_;
+		logger->acquire()->log(Logger::Level::status, "Creating Program {}\n", this->description);
+
 		[[maybe_unused]]
 		bool b = this->refreshShaders();
 		assert(b);
-
-		this->description = description_;
 	}
 
 	bwo::Program::Program(BufferGenerator vertexGenerator, BufferGenerator fragmentGenerator, std::string_view description_) {
 		this->getVertexBuffer = vertexGenerator;
 		this->getFragmentBuffer = fragmentGenerator;
 
+		this->description = description_;
+		logger->acquire()->log(Logger::Level::status, "Creating Program {}\n", this->description);
+
 		[[maybe_unused]]
 		bool b = this->refreshShaders();
 		assert(b);
-
-		this->description = description_;
 	}
 
 	bwo::Program::~Program() {
