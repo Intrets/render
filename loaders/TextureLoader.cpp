@@ -152,4 +152,8 @@ namespace render
 
 		return load2DTexture(Texture);
 	}
+
+	bwo::Texture2D load2DTexture(std::unique_ptr<Buffer> const& buffer) {
+		return load2DTexture(buffer->getData<char>(), buffer->getSize<char>());
+	}
 }
