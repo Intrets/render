@@ -69,7 +69,7 @@ namespace render
 	template<class T, class phantom = void>
 	struct UniformBase
 	{
-		T storage;
+		std::optional<T> storage = std::nullopt;
 		std::string name;
 
 		GLuint location = std::numeric_limits<GLuint>::max();
@@ -91,10 +91,12 @@ namespace render
 			assert(this->location != invalid_location);
 			assert(other.location == invalid_location);
 
-			setFromOtherImpl(other.storage);
+			if (other.storage.has_value()) {
+				setFromOtherImpl(other.storage.value());
+			}
 		}
 
-		inline void setFromOtherImpl(T other);
+		inline void setFromOtherImpl(T const& other);
 
 		UniformBase() = delete;
 		~UniformBase() = default;
@@ -104,14 +106,21 @@ namespace render
 
 	using Uniform1f = UniformBase<float>;
 	template<>
-	inline void Uniform1f::setFromOtherImpl(float other) {
+	inline void Uniform1f::setFromOtherImpl(float const& other) {
 		glUniform1f(this->location, other);
 	}
 
 	using Uniform2f = UniformBase<glm::vec2>;
 	template<>
-	inline void Uniform2f::setFromOtherImpl(glm::vec2 other) {
+	inline void Uniform2f::setFromOtherImpl(glm::vec2 const& other) {
 		glUniform2fv(this->location, 1, &other[0]);
+	}
+
+	using Uniform4fv = UniformBase<std::vector<glm::vec4>>;
+	template<>
+	inline void Uniform4fv::setFromOtherImpl(std::vector<glm::vec4> const& other) {
+		assert(!other.empty());
+		glUniform4fv(this->location, static_cast<GLsizei>(other.size()), &other[0][0]);
 	}
 
 	namespace description
@@ -127,7 +136,7 @@ namespace render
 	using UniformTexture3D = UniformBase<GLuint, description::Texture3D>;
 
 	template<>
-	inline void UniformTexture2D::setFromOtherImpl(GLuint other) {
+	inline void UniformTexture2D::setFromOtherImpl(GLuint const& other) {
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
 		glActiveTexture(GL_TEXTURE0 + *unit);
@@ -138,7 +147,7 @@ namespace render
 	}
 
 	template<>
-	inline void UniformTexture2DArray::setFromOtherImpl(GLuint other) {
+	inline void UniformTexture2DArray::setFromOtherImpl(GLuint const& other) {
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
 		glActiveTexture(GL_TEXTURE0 + *unit);
@@ -149,7 +158,7 @@ namespace render
 	}
 
 	template<>
-	inline void UniformTexture3D::setFromOtherImpl(GLuint other) {
+	inline void UniformTexture3D::setFromOtherImpl(GLuint const& other) {
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
 		glActiveTexture(GL_TEXTURE0 + *unit);
@@ -161,7 +170,7 @@ namespace render
 
 	using UniformMatrix4f = UniformBase<glm::mat4>;
 	template<>
-	inline void UniformMatrix4f::setFromOtherImpl(glm::mat4 other) {
+	inline void UniformMatrix4f::setFromOtherImpl(glm::mat4 const& other) {
 		glUniformMatrix4fv(this->location, 1, GL_FALSE, &other[0][0]);
 	}
 
@@ -310,11 +319,38 @@ namespace render
 				state.offset += sizeof(Color) * size;
 			}
 		};
+
+		template<size_t size>
+		struct applyVertexInfo<glm::mat3, size>
+		{
+			static void run(VertexInfoState& state) {
+				static_assert(size == 1);
+				for (size_t i = 0; i < 3; i++) {
+					glVertexAttribPointer(
+						state.index,
+						static_cast<GLint>(3),
+						GL_FLOAT,
+						GL_FALSE,
+						state.stride,
+						(void*)state.offset
+					);
+					glVertexAttribDivisor(state.index, state.divisor);
+					glEnableVertexAttribArray(state.index);
+
+					state.index++;
+					state.offset += sizeof(float) * 3;
+				}
+			}
+		};
+
 	}
 
 	template<class T>
 	static void applyVertexInfo(VertexInfoState& state) {
-		if constexpr (std::same_as<T, float>) {
+		if constexpr (std::same_as<T, int32_t>) {
+			detail::applyVertexInfo<int32_t, 1>::run(state);
+		}
+		else if constexpr (std::same_as<T, float>) {
 			detail::applyVertexInfo<float, 1>::run(state);
 		}
 		else if constexpr (std::same_as<T, glm::vec2>) {
@@ -328,6 +364,9 @@ namespace render
 		}
 		else if constexpr (std::same_as<T, Color>) {
 			detail::applyVertexInfo<Color, 1>::run(state);
+		}
+		else if constexpr (std::same_as<T, glm::mat3>) {
+			detail::applyVertexInfo<glm::mat3, 1>::run(state);
 		}
 		else {
 			//static_assert(0);
@@ -372,6 +411,8 @@ namespace render
 				[&](auto& buffer) {
 					using T = std::remove_cvref_t<decltype(buffer)>;
 					using members = te::get_members_t<typename T::value_type>;
+					[[maybe_unused]]
+					members mm;
 
 					state.stride = sizeof(typename T::value_type);
 					state.offset = 0;
