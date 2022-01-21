@@ -18,6 +18,7 @@
 
 #include <vector>
 #include <cassert>
+#include <optional>
 
 #include <wrangled_gl/wrangled_gl.h>
 
@@ -72,10 +73,10 @@ namespace render
 		std::optional<T> storage = std::nullopt;
 		std::string name;
 
-		GLuint location = std::numeric_limits<GLuint>::max();
-		static constexpr inline GLuint invalid_location = std::numeric_limits<GLuint>::max();
+		static constexpr inline GLint invalid_location = -1;
+		GLint location = invalid_location;
 
-		UniformBase(T val) : storage(val) {
+		UniformBase(T val) : storage(std::move(val)) {
 		}
 		UniformBase(std::string_view name_) : name(name_) {
 		}
