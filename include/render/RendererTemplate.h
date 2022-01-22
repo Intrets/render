@@ -72,6 +72,7 @@ namespace render
 	{
 		std::optional<T> storage = std::nullopt;
 		std::string name;
+		GLuint programID = 0;
 
 		static constexpr inline GLint invalid_location = -1;
 		GLint location = invalid_location;
@@ -85,12 +86,14 @@ namespace render
 			assert(!this->name.empty());
 			assert(this->location == invalid_location);
 			this->location = glGetUniformLocation(program.ID, this->name.c_str());
+			this->programID = program.ID;
 			assert(this->location != invalid_location);
 		};
 
 		void setFromOther(UniformBase<T, phantom> const& other) {
 			assert(this->location != invalid_location);
 			assert(other.location == invalid_location);
+			assert(bwo::Program::ScopedUseProgram::current == this->programID);
 
 			if (other.storage.has_value()) {
 				setFromOtherImpl(other.storage.value());
@@ -108,19 +111,25 @@ namespace render
 	using Uniform1f = UniformBase<float>;
 	template<>
 	inline void Uniform1f::setFromOtherImpl(float const& other) {
+		assert(bwo::Program::ScopedUseProgram::current == this->programID);
+
 		glUniform1f(this->location, other);
 	}
 
 	using Uniform2f = UniformBase<glm::vec2>;
 	template<>
 	inline void Uniform2f::setFromOtherImpl(glm::vec2 const& other) {
+		assert(bwo::Program::ScopedUseProgram::current == this->programID);
+
 		glUniform2fv(this->location, 1, &other[0]);
 	}
 
 	using Uniform4fv = UniformBase<std::vector<glm::vec4>>;
 	template<>
 	inline void Uniform4fv::setFromOtherImpl(std::vector<glm::vec4> const& other) {
+		assert(bwo::Program::ScopedUseProgram::current == this->programID);
 		assert(!other.empty());
+
 		glUniform4fv(this->location, static_cast<GLsizei>(other.size()), &other[0][0]);
 	}
 
@@ -138,6 +147,8 @@ namespace render
 
 	template<>
 	inline void UniformTexture2D::setFromOtherImpl(GLuint const& other) {
+		assert(bwo::Program::ScopedUseProgram::current == this->programID);
+
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
 		glActiveTexture(GL_TEXTURE0 + *unit);
@@ -149,6 +160,8 @@ namespace render
 
 	template<>
 	inline void UniformTexture2DArray::setFromOtherImpl(GLuint const& other) {
+		assert(bwo::Program::ScopedUseProgram::current == this->programID);
+
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
 		glActiveTexture(GL_TEXTURE0 + *unit);
@@ -160,6 +173,8 @@ namespace render
 
 	template<>
 	inline void UniformTexture3D::setFromOtherImpl(GLuint const& other) {
+		assert(bwo::Program::ScopedUseProgram::current == this->programID);
+
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
 		glActiveTexture(GL_TEXTURE0 + *unit);
@@ -172,6 +187,8 @@ namespace render
 	using UniformMatrix4f = UniformBase<glm::mat4>;
 	template<>
 	inline void UniformMatrix4f::setFromOtherImpl(glm::mat4 const& other) {
+		assert(bwo::Program::ScopedUseProgram::current == this->programID);
+
 		glUniformMatrix4fv(this->location, 1, GL_FALSE, &other[0][0]);
 	}
 
@@ -641,7 +658,7 @@ namespace render
 			Global<ogs::State>->setState(config);
 
 			auto bind = this->vao.bindScoped();
-			this->program.use();
+			auto useScopedProgram = this->program.getScopedUse();
 
 			{ // Set uniforms
 				auto targetUniforms = te::get_tie(this->uniforms);

@@ -225,6 +225,25 @@ namespace render
 		public:
 			using BufferGenerator = std::function<std::optional<std::unique_ptr<Buffer>>()>;
 
+			struct ScopedUseProgram
+			{
+				inline static GLuint current = 0;
+
+				ScopedUseProgram() = delete;
+				ScopedUseProgram(GLuint id) {
+					assert(current == 0);
+					current = id;
+					glUseProgram(id);
+				}
+
+				~ScopedUseProgram() {
+					current = 0;
+					glUseProgram(0);
+				}
+
+				NO_COPY_MOVE(ScopedUseProgram);
+			};
+
 			GLuint ID = 0;
 
 		private:
@@ -243,7 +262,7 @@ namespace render
 			[[nodiscard]]
 			static bool refreshAll();
 
-			void use();
+			ScopedUseProgram getScopedUse();
 			[[nodiscard]]
 			bool refreshShaders();
 

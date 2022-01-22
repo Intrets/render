@@ -55,8 +55,8 @@ namespace render
 		}
 	}
 
-	void bwo::Program::use() {
-		glUseProgram(this->ID);
+	bwo::Program::ScopedUseProgram bwo::Program::getScopedUse() {
+		return ScopedUseProgram(this->ID);
 	}
 
 	bool bwo::Program::refreshAll() {
