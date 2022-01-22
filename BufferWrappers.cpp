@@ -164,6 +164,10 @@ namespace render
 		assert(b);
 	}
 
+	std::string_view bwo::Program::getDescription() const {
+		return this->description;
+	}
+
 	bwo::Program::~Program() {
 		deleteProgram(*this);
 	}

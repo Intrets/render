@@ -291,6 +291,8 @@ namespace render
 				return *this;
 			};
 
+			std::string_view getDescription() const;
+
 			NO_COPY(Program);
 			~Program();
 		};
