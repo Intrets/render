@@ -514,6 +514,61 @@ namespace render
 
 	static constexpr auto all_render_modes = te::value_list<render::TRIANGLE, render::POINT, render::LINE, render::LINESTRIP>;
 
+
+	template<class Uniforms, int mode, class... Buffers>
+	struct Renderer2
+	{
+		struct RendererVAO
+		{
+			std::tuple<Buffers...> buffers;
+			VAO<Buffers...> vao{ buffers };
+
+			template<class T>
+			void setBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
+				constexpr auto enumerated_buffer_types = te::enumerate_in_list(
+					te::List<typename Buffers::value_type...>
+				);
+
+				constexpr auto same_types = te::filter(
+					[]<template<class...> class L, class S, auto I>(te::Type_t<L<S, te::detail::Value<I>>>) {
+					return te::Value<std::same_as<T, S>>;
+				}, enumerated_buffer_types);
+
+				static_assert(Getvalue(te::list_size(same_types)) != 0, "No buffer found with type T");
+				static_assert(Getvalue(te::list_size(same_types)) < 2, "Multiple buffers found with type T");
+
+				constexpr size_t I = std::tuple_element_t<1, std::tuple_element_t<0, Gettype(same_types)>>::value;
+
+				this->setBuffer<I>(info, hint);
+			}
+
+			template<size_t I>
+			void setBuffer(RenderInfoTemplate<std::tuple_element_t<I, std::tuple<typename Buffers::value_type...>>> const& info, BufferUsageHint hint) {
+				std::get<I>(this->buffers).set(info.data, hint);
+			}
+		};
+
+		struct RendererProgram
+		{
+			bwo::Program program;
+			Uniforms uniforms;
+
+			RendererProgram(
+				bwo::Program::BufferGenerator vertexGenerator,
+				bwo::Program::BufferGenerator fragmentGenerator,
+				std::string_view description
+			);
+
+			void render(
+				bwo::FrameBuffer& target,
+				glm::ivec4 viewport,
+				ogs::Configuration const& config,
+				Uniforms uniforms_,
+				RendererVAO& vao
+			);
+		};
+	};
+
 	template<
 		class Uniforms,
 		int mode,
@@ -763,4 +818,119 @@ namespace render
 			this->data.push_back({ i });
 		}
 	};
+
+	template<class Uniforms, int mode, class... Buffers>
+	inline Renderer2<Uniforms, mode, Buffers...>::RendererProgram::RendererProgram(bwo::Program::BufferGenerator vertexGenerator, bwo::Program::BufferGenerator fragmentGenerator, std::string_view description)
+		: program(vertexGenerator, fragmentGenerator, description) {
+
+		if constexpr (Uniforms::member_count > 0) {
+			te::tuple_for_each(
+				[this](auto& t) {
+					t.init(this->program);
+				}, te::get_tie(this->uniforms));
+		}
+	}
+
+	template<class Uniforms, int mode, class... Buffers>
+	inline void Renderer2<Uniforms, mode, Buffers...>::RendererProgram::render(
+		bwo::FrameBuffer& target,
+		glm::ivec4 viewport,
+		ogs::Configuration const& config,
+		Uniforms uniforms_,
+		RendererVAO& vao) {
+
+		Global<ogs::State>->setState(config);
+
+		auto bind = vao.vao.bindScoped();
+		auto useScopedProgram = this->program.getScopedUse();
+
+		// Find instance and element count
+		std::optional<int> instanceCount;
+		int elementCount;
+		{
+			std::optional<int> maybeElementCount;
+
+			te::tuple_for_each([&](auto& buffer) {
+				if constexpr (buffer.divisor == 0) {
+					if (maybeElementCount.has_value()) {
+						assert(maybeElementCount.value() == buffer.size);
+					}
+					else {
+						maybeElementCount = static_cast<int>(buffer.size);
+					}
+				}
+				else {
+					auto bufferSize = static_cast<int>(buffer.size);
+
+					if (!instanceCount.has_value()) {
+						instanceCount = bufferSize;
+					}
+					else if (instanceCount.value() != bufferSize) {
+						logger->acquire()->log(Logger::Level::error, "Buffer size mis-match when rendering program {}. Sizes {} and {}. Continuing with smallest.\n", this->program.getDescription(), instanceCount.value(), bufferSize);
+
+						instanceCount = std::min(instanceCount.value(), bufferSize);
+					}
+				}
+				}, vao.buffers);
+
+			if (!maybeElementCount.has_value()) {
+				logger->acquire()->log(Logger::Level::error, "Missing element buffer to determine amount of elements to draw in program {}. Skipping render.\n", this->program.getDescription());
+				return;
+			}
+			elementCount = maybeElementCount.value();
+		}
+
+		{ // Set uniforms
+			auto targetUniforms = te::get_tie(this->uniforms);
+			auto storageUniforms = te::get_tie(uniforms_);
+
+			auto zipped = te::tuple_zip(targetUniforms, storageUniforms);
+
+			auto unit = *LazyGlobal<int, description::TexturesBound>;
+			*unit = 0;
+
+			te::tuple_for_each(
+				[](auto& t) {
+					auto& [target, storage] = t;
+					target.setFromOther(storage);
+				}, zipped
+			);
+		} // End set uniforms
+
+		if (!instanceCount.has_value()) {
+			te::for_each_type(
+				[&]<auto m>(te::Value_t<m>) {
+				if constexpr ((mode & m) == m) {
+					target.draw(
+						viewport,
+						[elementCount]() {
+							glDrawArrays(
+								getRenderMode(m),
+								0,
+								static_cast<GLsizei>(elementCount)
+							);
+						}
+					);
+				}
+			}, all_render_modes);
+		}
+		else {
+			te::for_each_type(
+				[&]<auto m>(te::Value_t<m>) {
+				if constexpr ((mode & m) == m) {
+					target.draw(
+						viewport,
+						[elementCount, instanceCount = instanceCount.value()]() {
+						glDrawArraysInstanced(
+							getRenderMode(m),
+							0,
+							static_cast<GLsizei>(elementCount),
+							static_cast<GLsizei>(instanceCount)
+						);
+					}
+					);
+				}
+			}, all_render_modes);
+		}
+	}
 }

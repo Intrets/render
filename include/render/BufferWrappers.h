@@ -262,13 +262,13 @@ namespace render
 			[[nodiscard]]
 			static bool refreshAll();
 
+			[[nodiscard]]
 			ScopedUseProgram getScopedUse();
 			[[nodiscard]]
 			bool refreshShaders();
 
 			Program() = default;
-			Program(
-				char const* vert_raw, size_t vert_size, char const* frag_raw, size_t frag_size, std::string const& description);
+			Program(char const* vert_raw, size_t vert_size, char const* frag_raw, size_t frag_size, std::string const& description);
 			Program(std::string_view vert_name, std::string_view frag_file, std::string const& description, int);
 			Program(BufferGenerator vertexGenerator, BufferGenerator fragmentGenerator, std::string_view description);
 
