@@ -898,39 +898,43 @@ namespace render
 		} // End set uniforms
 
 		if (!instanceCount.has_value()) {
-			te::for_each_type(
-				[&]<auto m>(te::Value_t<m>) {
-				if constexpr ((mode & m) == m) {
-					target.draw(
-						viewport,
-						[elementCount]() {
-							glDrawArrays(
-								getRenderMode(m),
-								0,
-								static_cast<GLsizei>(elementCount)
-							);
-						}
-					);
-				}
-			}, all_render_modes);
-		}
-		else {
-			te::for_each_type(
-				[&]<auto m>(te::Value_t<m>) {
-				if constexpr ((mode & m) == m) {
-					target.draw(
-						viewport,
-						[elementCount, instanceCount = instanceCount.value()]() {
-						glDrawArraysInstanced(
-							getRenderMode(m),
-							0,
-							static_cast<GLsizei>(elementCount),
-							static_cast<GLsizei>(instanceCount)
+			if (elementCount > 0) {
+				te::for_each_type(
+					[&]<auto m>(te::Value_t<m>) {
+					if constexpr ((mode & m) == m) {
+						target.draw(
+							viewport,
+							[elementCount]() {
+								glDrawArrays(
+									getRenderMode(m),
+									0,
+									static_cast<GLsizei>(elementCount)
+								);
+							}
 						);
 					}
-					);
-				}
-			}, all_render_modes);
+				}, all_render_modes);
+			}
+		}
+		else {
+			if (instanceCount > 0) {
+				te::for_each_type(
+					[&]<auto m>(te::Value_t<m>) {
+					if constexpr ((mode & m) == m) {
+						target.draw(
+							viewport,
+							[elementCount, instanceCount = instanceCount.value()]() {
+							glDrawArraysInstanced(
+								getRenderMode(m),
+								0,
+								static_cast<GLsizei>(elementCount),
+								static_cast<GLsizei>(instanceCount)
+							);
+						}
+						);
+					}
+				}, all_render_modes);
+			}
 		}
 	}
 }
