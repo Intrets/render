@@ -209,19 +209,6 @@ namespace render
 
 		class Program
 		{
-		private:
-			friend class Uniform1f;
-			friend class Uniform1i;
-			friend class Uniform2fv;
-			friend class Uniform2iv;
-			friend class Uniform3fv;
-			friend class Uniform3iv;
-			friend class Uniform4fv;
-			friend class Uniform4iv;
-			friend class UniformMatrix4fv;
-			friend class UniformTexture2D;
-			friend class UniformTexture2DArray;
-
 		public:
 			using BufferGenerator = std::function<std::optional<std::unique_ptr<Buffer>>()>;
 
