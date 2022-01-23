@@ -775,16 +775,16 @@ namespace render
 	};
 
 	template<class Uniforms, class... Buffers>
-	using TriRenderer = Renderer<Uniforms, RenderMode::TRIANGLE, Buffers...>;
+	using TriRenderer = Renderer2<Uniforms, RenderMode::TRIANGLE, Buffers...>;
 
 	template<class Uniforms, class... Buffers>
-	using PointRenderer = Renderer<Uniforms, RenderMode::POINT, Buffers...>;
+	using PointRenderer = Renderer2<Uniforms, RenderMode::POINT, Buffers...>;
 
 	template<class Uniforms, class... Buffers>
-	using LineRenderer = Renderer<Uniforms, RenderMode::LINE, Buffers...>;
+	using LineRenderer = Renderer2<Uniforms, RenderMode::LINE, Buffers...>;
 
 	template<class Uniforms, class... Buffers>
-	using LinePointRenderer = Renderer<Uniforms, RenderMode::LINESTRIP, Buffers...>;
+	using LinePointRenderer = Renderer2<Uniforms, RenderMode::LINESTRIP, Buffers...>;
 
 
 	template<>
