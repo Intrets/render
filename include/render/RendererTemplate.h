@@ -511,7 +511,6 @@ namespace render
 
 	static constexpr auto all_render_modes = te::value_list<render::TRIANGLE, render::POINT, render::LINE, render::LINESTRIP>;
 
-
 	template<class Uniforms, int mode, class... Buffers>
 	struct Renderer2
 	{
@@ -641,11 +640,6 @@ namespace render
 		Uniforms const& uniforms_,
 		RendererVAO& vao) {
 
-		Global<ogs::State>->setState(config);
-
-		auto bind = vao.vao.bindScoped();
-		auto useScopedProgram = this->program.getScopedUse();
-
 		// Find instance and element count
 		std::optional<int> instanceCount;
 		int elementCount;
@@ -682,46 +676,51 @@ namespace render
 			elementCount = maybeElementCount.value();
 		}
 
+		Global<ogs::State>->setState(config);
+
+		if (elementCount == 0 || (instanceCount.has_value() && instanceCount.value() == 0)) {
+			return;
+		}
+
+		auto bind = vao.vao.bindScoped();
+		auto useScopedProgram = this->program.getScopedUse();
+
 		this->setUniforms(uniforms_);
 
 		if (!instanceCount.has_value()) {
-			if (elementCount > 0) {
-				te::for_each_type(
-					[&]<auto m>(te::Value_t<m>) {
-					if constexpr ((mode & m) == m) {
-						target.draw(
-							viewport,
-							[elementCount]() {
-								glDrawArrays(
-									getRenderMode(m),
-									0,
-									static_cast<GLsizei>(elementCount)
-								);
-							}
-						);
-					}
-				}, all_render_modes);
-			}
-		}
-		else {
-			if (instanceCount > 0) {
-				te::for_each_type(
-					[&]<auto m>(te::Value_t<m>) {
-					if constexpr ((mode & m) == m) {
-						target.draw(
-							viewport,
-							[elementCount, instanceCount = instanceCount.value()]() {
-							glDrawArraysInstanced(
+			te::for_each_type(
+				[&]<auto m>(te::Value_t<m>) {
+				if constexpr ((mode & m) == m) {
+					target.draw(
+						viewport,
+						[elementCount]() {
+							glDrawArrays(
 								getRenderMode(m),
 								0,
-								static_cast<GLsizei>(elementCount),
-								static_cast<GLsizei>(instanceCount)
+								static_cast<GLsizei>(elementCount)
 							);
 						}
+					);
+				}
+			}, all_render_modes);
+		}
+		else {
+			te::for_each_type(
+				[&]<auto m>(te::Value_t<m>) {
+				if constexpr ((mode & m) == m) {
+					target.draw(
+						viewport,
+						[elementCount, instanceCount = instanceCount.value()]() {
+						glDrawArraysInstanced(
+							getRenderMode(m),
+							0,
+							static_cast<GLsizei>(elementCount),
+							static_cast<GLsizei>(instanceCount)
 						);
 					}
-				}, all_render_modes);
-			}
+					);
+				}
+			}, all_render_modes);
 		}
 	}
 
