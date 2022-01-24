@@ -212,32 +212,18 @@ namespace render
 		public:
 			using BufferGenerator = std::function<std::optional<std::unique_ptr<Buffer>>()>;
 
-			struct ScopedUseProgram
+			struct ScopedProgram
 			{
 				inline static GLint current = 0;
 
 				bool resetOnDestruct = false;
 
-				ScopedUseProgram() = delete;
-				ScopedUseProgram(GLint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
-					GLint queriedCurrent = 0;
-					glGetIntegerv(GL_CURRENT_PROGRAM, &queriedCurrent);
-					assert(queriedCurrent == current);
+				ScopedProgram() = delete;
+				ScopedProgram(GLint id, bool resetOnDestruct_);
 
-					if (current != id) {
-						current = id;
-						glUseProgram(id);
-					}
-				}
+				~ScopedProgram();
 
-				~ScopedUseProgram() {
-					if (this->resetOnDestruct) {
-						current = 0;
-						glUseProgram(0);
-					}
-				}
-
-				NO_COPY_MOVE(ScopedUseProgram);
+				NO_COPY_MOVE(ScopedProgram);
 			};
 
 			GLint ID = 0;
@@ -259,7 +245,7 @@ namespace render
 			static bool refreshAll();
 
 			[[nodiscard]]
-			ScopedUseProgram getScopedUse(bool resetOnDestruct = false);
+			ScopedProgram getScopedUse(bool resetOnDestruct = false);
 			[[nodiscard]]
 			bool refreshShaders();
 

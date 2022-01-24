@@ -55,8 +55,8 @@ namespace render
 		}
 	}
 
-	bwo::Program::ScopedUseProgram bwo::Program::getScopedUse(bool resetOnDestruct) {
-		return ScopedUseProgram(this->ID, resetOnDestruct);
+	bwo::Program::ScopedProgram bwo::Program::getScopedUse(bool resetOnDestruct) {
+		return ScopedProgram(this->ID, resetOnDestruct);
 	}
 
 	bool bwo::Program::refreshAll() {
@@ -540,6 +540,22 @@ namespace render
 			(void*)0
 		};
 		return res;
+	}
+
+	namespace bwo
+	{
+		Program::ScopedProgram::ScopedProgram(GLint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
+#ifdef DEBUG_BUILD
+			GLint queriedCurrent = 0;
+			glGetIntegerv(GL_CURRENT_PROGRAM, &queriedCurrent);
+			assert(queriedCurrent == current);
+#endif
+
+			if (current != id) {
+				current = id;
+				glUseProgram(id);
+			}
+		}
 	}
 }
 
