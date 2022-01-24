@@ -521,8 +521,6 @@ namespace render
 
 			template<class T>
 			RendererVAO& setBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
-				auto vaoUse = this->vao.bindScoped();
-
 				constexpr auto enumerated_buffer_types = te::enumerate_in_list(
 					te::List<typename Buffers::value_type...>
 				);
@@ -544,8 +542,6 @@ namespace render
 
 			template<size_t I>
 			RendererVAO& setBuffer(RenderInfoTemplate<std::tuple_element_t<I, std::tuple<typename Buffers::value_type...>>> const& info, BufferUsageHint hint) {
-				auto vaoUse = this->vao.bindScoped();
-
 				std::get<I>(this->buffers).set(info.data, hint);
 
 				return *this;
@@ -676,11 +672,11 @@ namespace render
 			elementCount = maybeElementCount.value();
 		}
 
-		Global<ogs::State>->setState(config);
-
 		if (elementCount == 0 || (instanceCount.has_value() && instanceCount.value() == 0)) {
 			return;
 		}
+
+		Global<ogs::State>->setState(config);
 
 		auto bind = vao.vao.bindScoped();
 		auto useScopedProgram = this->program.getScopedUse();
