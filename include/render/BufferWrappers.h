@@ -214,12 +214,16 @@ namespace render
 
 			struct ScopedUseProgram
 			{
-				inline static GLuint current = 0;
+				inline static GLint current = 0;
 
 				bool resetOnDestruct = false;
 
 				ScopedUseProgram() = delete;
-				ScopedUseProgram(GLuint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
+				ScopedUseProgram(GLint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
+					GLint queriedCurrent = 0;
+					glGetIntegerv(GL_CURRENT_PROGRAM, &queriedCurrent);
+					assert(queriedCurrent == current);
+
 					if (current != id) {
 						current = id;
 						glUseProgram(id);
@@ -236,7 +240,7 @@ namespace render
 				NO_COPY_MOVE(ScopedUseProgram);
 			};
 
-			GLuint ID = 0;
+			GLint ID = 0;
 
 		private:
 			BufferGenerator getVertexBuffer;

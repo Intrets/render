@@ -71,7 +71,7 @@ namespace render
 	{
 		std::optional<T> storage = std::nullopt;
 		std::string name;
-		GLuint programID = 0;
+		GLint programID = 0;
 
 		static constexpr inline GLint invalid_location = -1;
 		GLint location = invalid_location;
@@ -397,22 +397,29 @@ namespace render
 
 		struct BindScoped
 		{
+			inline static GLuint current = 0;
+
+			bool resetOnDestruct = false;
+
 			BindScoped() = delete;
-			BindScoped(GLuint ID) {
-				assert(ID != 0);
+			BindScoped(GLuint ID, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
+				current = ID;
 				glBindVertexArray(ID);
 			}
 
 			~BindScoped() {
-				glBindVertexArray(0);
+				if (this->resetOnDestruct) {
+					current = 0;
+					glBindVertexArray(0);
+				}
 			}
 
 			NO_COPY_MOVE(BindScoped);
 		};
 
 		[[nodiscard]]
-		BindScoped bindScoped() {
-			return BindScoped(this->ID);
+		BindScoped bindScoped(bool resetOnDestruct = false) {
+			return BindScoped(this->ID, resetOnDestruct);
 		}
 
 		VAO(std::tuple<Buffers...>& buffers) {
@@ -524,6 +531,8 @@ namespace render
 
 			template<class T>
 			RendererVAO& setBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
+				auto vaoUse = this->vao.bindScoped();
+
 				constexpr auto enumerated_buffer_types = te::enumerate_in_list(
 					te::List<typename Buffers::value_type...>
 				);
@@ -545,6 +554,8 @@ namespace render
 
 			template<size_t I>
 			RendererVAO& setBuffer(RenderInfoTemplate<std::tuple_element_t<I, std::tuple<typename Buffers::value_type...>>> const& info, BufferUsageHint hint) {
+				auto vaoUse = this->vao.bindScoped();
+
 				std::get<I>(this->buffers).set(info.data, hint);
 
 				return *this;
