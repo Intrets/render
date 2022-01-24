@@ -38,7 +38,6 @@
 
 namespace render
 {
-
 	struct Vertex2
 	{
 		static constexpr auto member_count = 1;
@@ -524,7 +523,7 @@ namespace render
 			VAO<Buffers...> vao{ buffers };
 
 			template<class T>
-			void setBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
+			RendererVAO& setBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
 				constexpr auto enumerated_buffer_types = te::enumerate_in_list(
 					te::List<typename Buffers::value_type...>
 				);
@@ -540,11 +539,15 @@ namespace render
 				constexpr size_t I = std::tuple_element_t<1, std::tuple_element_t<0, Gettype(same_types)>>::value;
 
 				this->setBuffer<I>(info, hint);
+
+				return *this;
 			}
 
 			template<size_t I>
-			void setBuffer(RenderInfoTemplate<std::tuple_element_t<I, std::tuple<typename Buffers::value_type...>>> const& info, BufferUsageHint hint) {
+			RendererVAO& setBuffer(RenderInfoTemplate<std::tuple_element_t<I, std::tuple<typename Buffers::value_type...>>> const& info, BufferUsageHint hint) {
 				std::get<I>(this->buffers).set(info.data, hint);
+
+				return *this;
 			}
 		};
 
@@ -563,9 +566,11 @@ namespace render
 				bwo::FrameBuffer& target,
 				glm::ivec4 viewport,
 				ogs::Configuration const& config,
-				Uniforms uniforms_,
+				Uniforms const& uniforms_,
 				RendererVAO& vao
 			);
+
+			void setUniforms(Uniforms const& uniforms_);
 		};
 	};
 
@@ -625,7 +630,7 @@ namespace render
 			bwo::FrameBuffer& target,
 			glm::ivec4 viewport,
 			ogs::Configuration const& config,
-			Uniforms uniforms_,
+			Uniforms const& uniforms_,
 			te::optional_ref<RenderInfoTemplate<typename Buffers::value_type> const>... infos
 		) {
 			// Find instance count
@@ -836,7 +841,7 @@ namespace render
 		bwo::FrameBuffer& target,
 		glm::ivec4 viewport,
 		ogs::Configuration const& config,
-		Uniforms uniforms_,
+		Uniforms const& uniforms_,
 		RendererVAO& vao) {
 
 		Global<ogs::State>->setState(config);
@@ -880,22 +885,7 @@ namespace render
 			elementCount = maybeElementCount.value();
 		}
 
-		{ // Set uniforms
-			auto targetUniforms = te::get_tie(this->uniforms);
-			auto storageUniforms = te::get_tie(uniforms_);
-
-			auto zipped = te::tuple_zip(targetUniforms, storageUniforms);
-
-			auto unit = *LazyGlobal<int, description::TexturesBound>;
-			*unit = 0;
-
-			te::tuple_for_each(
-				[](auto& t) {
-					auto& [target, storage] = t;
-					target.setFromOther(storage);
-				}, zipped
-			);
-		} // End set uniforms
+		this->setUniforms(uniforms_);
 
 		if (!instanceCount.has_value()) {
 			if (elementCount > 0) {
@@ -936,5 +926,23 @@ namespace render
 				}, all_render_modes);
 			}
 		}
+	}
+
+	template<class Uniforms, int mode, class... Buffers>
+	inline void Renderer2<Uniforms, mode, Buffers...>::RendererProgram::setUniforms(Uniforms const& uniforms_) {
+		auto targetUniforms = te::get_tie(this->uniforms);
+		auto storageUniforms = te::get_tie(uniforms_);
+
+		auto zipped = te::tuple_zip(targetUniforms, storageUniforms);
+
+		auto unit = *LazyGlobal<int, description::TexturesBound>;
+		*unit = 0;
+
+		te::tuple_for_each(
+			[](auto& t) {
+				auto& [target, storage] = t;
+				target.setFromOther(storage);
+			}, zipped
+		);
 	}
 }
