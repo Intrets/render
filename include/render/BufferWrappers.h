@@ -216,16 +216,21 @@ namespace render
 			{
 				inline static GLuint current = 0;
 
+				bool resetOnDestruct = false;
+
 				ScopedUseProgram() = delete;
-				ScopedUseProgram(GLuint id) {
-					assert(current == 0);
-					current = id;
-					glUseProgram(id);
+				ScopedUseProgram(GLuint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
+					if (current != id) {
+						current = id;
+						glUseProgram(id);
+					}
 				}
 
 				~ScopedUseProgram() {
-					current = 0;
-					glUseProgram(0);
+					if (this->resetOnDestruct) {
+						current = 0;
+						glUseProgram(0);
+					}
 				}
 
 				NO_COPY_MOVE(ScopedUseProgram);
@@ -250,7 +255,7 @@ namespace render
 			static bool refreshAll();
 
 			[[nodiscard]]
-			ScopedUseProgram getScopedUse();
+			ScopedUseProgram getScopedUse(bool resetOnDestruct = false);
 			[[nodiscard]]
 			bool refreshShaders();
 

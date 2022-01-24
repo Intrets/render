@@ -95,7 +95,7 @@ namespace render
 			assert(bwo::Program::ScopedUseProgram::current == this->programID);
 
 			if (other.storage.has_value()) {
-				setFromOtherImpl(other.storage.value());
+				this->setFromOtherImpl(other.storage.value());
 			}
 		}
 
@@ -930,6 +930,8 @@ namespace render
 
 	template<class Uniforms, int mode, class... Buffers>
 	inline void Renderer2<Uniforms, mode, Buffers...>::RendererProgram::setUniforms(Uniforms const& uniforms_) {
+		auto programUse = this->program.getScopedUse();
+
 		auto targetUniforms = te::get_tie(this->uniforms);
 		auto storageUniforms = te::get_tie(uniforms_);
 
