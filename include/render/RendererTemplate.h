@@ -411,14 +411,14 @@ namespace render
 		GLuint id = 0;
 
 		[[nodiscard]]
-		ScopedVAO bindScoped(bool resetOnDestruct = false) {
+		ScopedVAO bind(bool resetOnDestruct = false) {
 			return ScopedVAO(this->id, resetOnDestruct);
 		}
 
 		VAO(std::tuple<Buffers...>& buffers) {
 			glGenVertexArrays(1, &this->id);
 
-			auto bind = this->bindScoped();
+			auto bind = this->bind();
 
 			VertexInfoState state{
 				.index = 0,
@@ -518,6 +518,10 @@ namespace render
 		{
 			std::tuple<Buffers...> buffers;
 			VAO<Buffers...> vao{ buffers };
+
+			auto bind(bool resetOnDestruct = false) {
+				return this->vao.bind(resetOnDestruct);
+			}
 
 			template<class T>
 			RendererVAO& setBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
@@ -678,8 +682,8 @@ namespace render
 
 		Global<ogs::State>->setConfiguration(config);
 
-		auto bind = vao.vao.bindScoped();
-		auto useScopedProgram = this->program.getScopedUse();
+		auto useVAO = vao.bind();
+		auto useProgram = this->program.bind();
 
 		this->setUniforms(uniforms_);
 
@@ -722,7 +726,7 @@ namespace render
 
 	template<class Uniforms, int mode, class... Buffers>
 	inline void Renderer2<Uniforms, mode, Buffers...>::RendererProgram::setUniforms(Uniforms const& uniforms_) {
-		auto programUse = this->program.getScopedUse();
+		auto programUse = this->program.bind();
 
 		auto targetUniforms = te::get_tie(this->uniforms);
 		auto storageUniforms = te::get_tie(uniforms_);

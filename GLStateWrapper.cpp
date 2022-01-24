@@ -199,11 +199,11 @@ namespace ogs
 		}
 	}
 
-	bool State::isProgramBound(GLint id) {
+	bool State::isProgramBound(GLint id) const {
 		return this->program.has_value() && this->program == id;
 	}
 
-	bool State::isVAOBound(GLint id) {
+	bool State::isVAOBound(GLint id) const {
 		return this->vao.has_value() && this->vao == id;
 	}
 

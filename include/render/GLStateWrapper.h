@@ -130,8 +130,8 @@ namespace ogs
 		void setVAO(GLint id);
 		void setProgram(GLint id);
 
-		bool isProgramBound(GLint id);
-		bool isVAOBound(GLint id);
+		bool isProgramBound(GLint id) const;
+		bool isVAOBound(GLint id) const;
 
 		void flushState();
 	};

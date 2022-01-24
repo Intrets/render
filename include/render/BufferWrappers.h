@@ -195,7 +195,7 @@ namespace render
 			static bool refreshAll();
 
 			[[nodiscard]]
-			ScopedProgram getScopedUse(bool resetOnDestruct = false);
+			ScopedProgram bind(bool resetOnDestruct = false);
 			[[nodiscard]]
 			bool refreshShaders();
 
