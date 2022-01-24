@@ -110,6 +110,8 @@ namespace ogs
 		Configuration configuration{};
 		std::optional<glm::ivec4> viewport{};
 		std::optional<GLuint> frameBuffer{};
+		std::optional<GLint> vao{};
+		std::optional<GLint> program{};
 
 		int32_t MAX_COLOR_ATTACHMENTS;
 
@@ -125,6 +127,11 @@ namespace ogs
 
 		void setViewport(glm::ivec4 p);
 		void setFrameBuffer(GLuint frameBuffer);
+		void setVAO(GLint id);
+		void setProgram(GLint id);
+
+		bool isProgramBound(GLint id);
+		bool isVAOBound(GLint id);
 
 		void flushState();
 	};

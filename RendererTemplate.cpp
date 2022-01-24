@@ -16,24 +16,18 @@
 
 #include "RendererTemplate.h"
 
+#include <mem/Global.h>
+#include "GLStateWrapper.h"
+
 namespace render
 {
 	render::ScopedVAO::ScopedVAO(GLuint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
-#ifdef DEBUG_BUILD
-		GLint p = 0;
-		glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &p);
-		assert(static_cast<GLuint>(p) == current);
-#endif
-		if (current != id) {
-			current = id;
-			glBindVertexArray(id);
-		}
+		Global<ogs::State>->setVAO(id);
 	}
 
 	ScopedVAO::~ScopedVAO() {
 		if (this->resetOnDestruct) {
-			current = 0;
-			glBindVertexArray(0);
+			Global<ogs::State>->setVAO(0);
 		}
 	}
 }

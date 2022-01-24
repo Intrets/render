@@ -545,22 +545,12 @@ namespace render
 	namespace bwo
 	{
 		Program::ScopedProgram::ScopedProgram(GLint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
-#ifdef DEBUG_BUILD
-			GLint queriedCurrent = 0;
-			glGetIntegerv(GL_CURRENT_PROGRAM, &queriedCurrent);
-			assert(queriedCurrent == current);
-#endif
-
-			if (current != id) {
-				current = id;
-				glUseProgram(id);
-			}
+			Global<ogs::State>->setProgram(id);
 		}
 
 		Program::ScopedProgram::~ScopedProgram() {
 			if (this->resetOnDestruct) {
-				current = 0;
-				glUseProgram(0);
+				Global<ogs::State>->setProgram(0);
 			}
 		}
 	}

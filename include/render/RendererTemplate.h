@@ -92,7 +92,7 @@ namespace render
 		void setFromOther(UniformBase<T, phantom> const& other) {
 			assert(this->location != invalid_location);
 			assert(other.location == invalid_location);
-			assert(bwo::Program::ScopedProgram::current == this->programID);
+			assert(Global<ogs::State>->isProgramBound(this->programID));
 
 			if (other.storage.has_value()) {
 				this->setFromOtherImpl(other.storage.value());
@@ -110,7 +110,7 @@ namespace render
 	using Uniform1f = UniformBase<float>;
 	template<>
 	inline void Uniform1f::setFromOtherImpl(float const& other) {
-		assert(bwo::Program::ScopedProgram::current == this->programID);
+		assert(Global<ogs::State>->isProgramBound(this->programID));
 
 		glUniform1f(this->location, other);
 	}
@@ -118,7 +118,7 @@ namespace render
 	using Uniform2f = UniformBase<glm::vec2>;
 	template<>
 	inline void Uniform2f::setFromOtherImpl(glm::vec2 const& other) {
-		assert(bwo::Program::ScopedProgram::current == this->programID);
+		assert(Global<ogs::State>->isProgramBound(this->programID));
 
 		glUniform2fv(this->location, 1, &other[0]);
 	}
@@ -126,7 +126,7 @@ namespace render
 	using Uniform4fv = UniformBase<std::vector<glm::vec4>>;
 	template<>
 	inline void Uniform4fv::setFromOtherImpl(std::vector<glm::vec4> const& other) {
-		assert(bwo::Program::ScopedProgram::current == this->programID);
+		assert(Global<ogs::State>->isProgramBound(this->programID));
 		assert(!other.empty());
 
 		glUniform4fv(this->location, static_cast<GLsizei>(other.size()), &other[0][0]);
@@ -146,7 +146,7 @@ namespace render
 
 	template<>
 	inline void UniformTexture2D::setFromOtherImpl(GLuint const& other) {
-		assert(bwo::Program::ScopedProgram::current == this->programID);
+		assert(Global<ogs::State>->isProgramBound(this->programID));
 
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
@@ -159,7 +159,7 @@ namespace render
 
 	template<>
 	inline void UniformTexture2DArray::setFromOtherImpl(GLuint const& other) {
-		assert(bwo::Program::ScopedProgram::current == this->programID);
+		assert(Global<ogs::State>->isProgramBound(this->programID));
 
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
@@ -172,7 +172,7 @@ namespace render
 
 	template<>
 	inline void UniformTexture3D::setFromOtherImpl(GLuint const& other) {
-		assert(bwo::Program::ScopedProgram::current == this->programID);
+		assert(Global<ogs::State>->isProgramBound(this->programID));
 
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
@@ -186,7 +186,7 @@ namespace render
 	using UniformMatrix4f = UniformBase<glm::mat4>;
 	template<>
 	inline void UniformMatrix4f::setFromOtherImpl(glm::mat4 const& other) {
-		assert(bwo::Program::ScopedProgram::current == this->programID);
+		assert(Global<ogs::State>->isProgramBound(this->programID));
 
 		glUniformMatrix4fv(this->location, 1, GL_FALSE, &other[0][0]);
 	}

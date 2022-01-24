@@ -168,6 +168,45 @@ namespace ogs
 		}
 	}
 
+	void State::setVAO(GLint id) {
+#ifdef DEBUG_BUILD
+		if (this->vao.has_value()) {
+			GLint p = 0;
+			glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &p);
+			assert(p == this->vao.value());
+		}
+#endif
+
+		if (this->vao != id) {
+			this->vao = id;
+
+			glBindVertexArray(this->vao.value());
+		}
+	}
+
+	void State::setProgram(GLint id) {
+#ifdef DEBUG_BUILD
+		if (this->program.has_value()) {
+			GLint p = 0;
+			glGetIntegerv(GL_CURRENT_PROGRAM, &p);
+			assert(p == this->program.value());
+		}
+#endif
+		if (this->program != id) {
+			this->program = id;
+
+			glUseProgram(this->program.value());
+		}
+	}
+
+	bool State::isProgramBound(GLint id) {
+		return this->program.has_value() && this->program == id;
+	}
+
+	bool State::isVAOBound(GLint id) {
+		return this->vao.has_value() && this->vao == id;
+	}
+
 	void State::flushState() {
 		this->configuration.blend = BLEND::UNSET;
 		this->configuration.blendFunc = BLEND_FUNC::UNSET;
@@ -177,6 +216,8 @@ namespace ogs
 
 		this->viewport = std::nullopt;
 		this->frameBuffer = std::nullopt;
+		this->vao = std::nullopt;
+		this->program = std::nullopt;
 	}
 
 	Configuration TextConfiguration() {

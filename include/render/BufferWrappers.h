@@ -166,8 +166,6 @@ namespace render
 
 			struct ScopedProgram
 			{
-				inline static GLint current = 0;
-
 				bool resetOnDestruct = false;
 
 				ScopedProgram() = delete;
