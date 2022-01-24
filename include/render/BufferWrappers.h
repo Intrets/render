@@ -49,54 +49,6 @@ namespace render
 			DYNAMIC_COPY = GL_DYNAMIC_COPY,
 		};
 
-		template<class T>
-		class ArrayBuffer
-		{
-		public:
-
-		private:
-			GLenum usageHint;
-
-		public:
-			GLuint ID = 0;
-
-			ArrayBuffer() = default;
-			ArrayBuffer(BufferHint hint);
-			~ArrayBuffer();
-
-			void set(std::vector<T> const& data);
-			void set(uint32_t size, std::vector<T> const& data);
-			void setRaw(uint32_t size, void const* data);
-
-			void bind(GLenum location);
-
-			ArrayBuffer(ArrayBuffer<T>&& other) {
-				this->usageHint = other.usageHint;
-				this->ID = other.ID;
-
-				other.ID = 0;
-				other.usageHint = {};
-			}
-
-			ArrayBuffer& operator=(ArrayBuffer<T>&& other) {
-				if (this != &other) {
-					if (this->ID != 0) {
-						glDeleteBuffers(1, &this->ID);
-					}
-
-					this->usageHint = other.usageHint;
-					this->ID = other.ID;
-
-					other.ID = 0;
-					other.usageHint = {};
-				}
-				return *this;
-			}
-
-			NO_COPY(ArrayBuffer);
-
-		};
-
 		class Texture2DArray
 		{
 		public:
@@ -427,51 +379,5 @@ namespace render
 			DEFAULT_COPY_MOVE(Uniform1i);
 			~Uniform1i() = default;
 		};
-
-		struct Model
-		{
-			bwo::ArrayBuffer<glm::vec3> model{ bwo::BufferHint::STATIC_DRAW };
-			bwo::ArrayBuffer<glm::vec2> uv{ bwo::BufferHint::STATIC_DRAW };
-			bwo::ArrayBuffer<glm::vec3> normals{ bwo::BufferHint::STATIC_DRAW };
-			bwo::ArrayBuffer<uint16_t> indices{ bwo::BufferHint::STATIC_DRAW };
-			int32_t indexSize{};
-		};
-
-
-		template<class T>
-		inline ArrayBuffer<T>::ArrayBuffer(BufferHint hint) {
-			assert(this->ID == 0);
-			glGenBuffers(1, &this->ID);
-			this->usageHint = static_cast<GLenum>(hint);
-		}
-
-		template<class T>
-		inline ArrayBuffer<T>::~ArrayBuffer() {
-			glDeleteBuffers(1, &this->ID);
-		}
-
-		template<class T>
-		inline void ArrayBuffer<T>::set(std::vector<T> const& data) {
-			this->setRaw(static_cast<uint32_t>(sizeof(T) * data.size()), &data[0]);
-		}
-
-		template<class T>
-		inline void ArrayBuffer<T>::set(uint32_t size, std::vector<T> const& data) {
-			assert(size <= data.size());
-			this->setRaw(static_cast<uint32_t>(sizeof(T) * size), &data[0]);
-		}
-
-		template<class T>
-		inline void ArrayBuffer<T>::setRaw(uint32_t size, void const* data) {
-			assert(this->ID != 0);
-			glBindBuffer(GL_ARRAY_BUFFER, this->ID);
-			glBufferData(GL_ARRAY_BUFFER, size, data, this->usageHint);
-		}
-
-		template<class T>
-		inline void ArrayBuffer<T>::bind(GLenum location) {
-			assert(this->ID != 0);
-			glBindBuffer(location, this->ID);
-		}
 	}
 }

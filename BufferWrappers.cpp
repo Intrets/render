@@ -556,6 +556,13 @@ namespace render
 				glUseProgram(id);
 			}
 		}
+
+		Program::ScopedProgram::~ScopedProgram() {
+			if (this->resetOnDestruct) {
+				current = 0;
+				glUseProgram(0);
+			}
+		}
 	}
 }
 
