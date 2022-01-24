@@ -147,6 +147,27 @@ namespace ogs
 		}
 	}
 
+	void State::setViewport(glm::ivec4 p) {
+		if (this->viewport != p) {
+			this->viewport = p;
+
+			glViewport(
+				static_cast<GLint>(this->viewport.x),
+				static_cast<GLint>(this->viewport.y),
+				static_cast<GLsizei>(this->viewport.z),
+				static_cast<GLsizei>(this->viewport.w)
+			);
+		}
+	}
+
+	void State::setFrameBuffer(GLuint id) {
+		if (this->frameBuffer != id) {
+			this->frameBuffer = id;
+
+			glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+		}
+	}
+
 	void State::flushState() {
 		this->configuration.blend = BLEND::UNSET;
 		this->configuration.blendFunc = BLEND_FUNC::UNSET;
@@ -238,6 +259,17 @@ namespace ogs
 			BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
 			DEPTH_TEST::ENABLED,
 			DEPTH_FUNC::LEQUAL,
+			POLYGON_MODE::FILL,
+			0.0f,
+		};
+	}
+
+	Configuration DefaultConfiguration() {
+		return {
+			BLEND::ENABLED,
+			BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
+			DEPTH_TEST::DISABLED,
+			DEPTH_FUNC::UNSET,
 			POLYGON_MODE::FILL,
 			0.0f,
 		};

@@ -97,6 +97,7 @@ namespace ogs
 	Configuration BlockIDConfiguration();
 	Configuration DebugPointConfiguration();
 	Configuration DebugLineConfiguration();
+	Configuration DefaultConfiguration();
 	Configuration HighlightConfiguration();
 	Configuration GeneralConfiguration();
 	Configuration ShadowMapConfiguration();
@@ -107,6 +108,8 @@ namespace ogs
 	{
 	public:
 		Configuration configuration;
+		glm::ivec4 viewport{ -1, -1, -1, -1 };
+		GLuint frameBuffer = 0;
 
 		int32_t MAX_COLOR_ATTACHMENTS;
 
@@ -119,6 +122,9 @@ namespace ogs
 		void setDepthTest(DEPTH_TEST test);
 		void setDepthFunc(DEPTH_FUNC func);
 		void setPolygonMode(POLYGON_MODE mode);
+
+		void setViewport(glm::ivec4 p);
+		void setFrameBuffer(GLuint frameBuffer);
 
 		void flushState();
 	};

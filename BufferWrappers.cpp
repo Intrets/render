@@ -312,7 +312,7 @@ namespace render
 		assert(Global<ogs::State>->MAX_COLOR_ATTACHMENTS > attachmentNumber);
 
 		this->size = texture.size;
-		glBindFramebuffer(GL_FRAMEBUFFER, this->ID);
+		Global<ogs::State>->setFrameBuffer(this->ID);
 		glFramebufferTexture(GL_FRAMEBUFFER, getAttachmentEnum(attachmentNumber), texture.ID, mipmap);
 	}
 
@@ -320,7 +320,7 @@ namespace render
 		this->size.x = texture.size.x;
 		this->size.y = texture.size.y;
 
-		glBindFramebuffer(GL_FRAMEBUFFER, this->ID);
+		Global<ogs::State>->setFrameBuffer(this->ID);
 		glFramebufferTextureLayer(GL_FRAMEBUFFER, getAttachmentEnum(attachmentNumber), texture.ID, mipmap, layer);
 	}
 
@@ -328,19 +328,19 @@ namespace render
 		this->size.x = texture.size.x;
 		this->size.y = texture.size.y;
 
-		glBindFramebuffer(GL_FRAMEBUFFER, this->ID);
+		Global<ogs::State>->setFrameBuffer(this->ID);
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture.ID, 0);
 	}
 
 	void bwo::FrameBuffer::draw(glm::ivec4 viewport, std::function<void()> f) {
-		glBindFramebuffer(GL_FRAMEBUFFER, this->ID);
-		glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
+		Global<ogs::State>->setFrameBuffer(this->ID);
+		Global<ogs::State>->setViewport(viewport);
 
 		f();
 	}
 
 	void bwo::FrameBuffer::clear(glm::vec4 color, bool depth) {
-		glBindFramebuffer(GL_FRAMEBUFFER, this->ID);
+		Global<ogs::State>->setFrameBuffer(this->ID);
 		glClearColor(color.r, color.g, color.b, color.a);
 		if (depth) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -351,7 +351,7 @@ namespace render
 	}
 
 	void bwo::FrameBuffer::clearDepth() {
-		glBindFramebuffer(GL_FRAMEBUFFER, this->ID);
+		Global<ogs::State>->setFrameBuffer(this->ID);
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
