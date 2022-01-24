@@ -676,7 +676,7 @@ namespace render
 			return;
 		}
 
-		Global<ogs::State>->setState(config);
+		Global<ogs::State>->setConfiguration(config);
 
 		auto bind = vao.vao.bindScoped();
 		auto useScopedProgram = this->program.getScopedUse();

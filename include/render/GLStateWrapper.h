@@ -1,5 +1,5 @@
 // render - A C++ OpenGL library
-// Copyright (C) 2021  Intrets
+// Copyright (C) 2022  Intrets
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -107,15 +107,15 @@ namespace ogs
 	class State
 	{
 	public:
-		Configuration configuration;
-		glm::ivec4 viewport{ -1, -1, -1, -1 };
-		GLuint frameBuffer = 0;
+		Configuration configuration{};
+		std::optional<glm::ivec4> viewport{};
+		std::optional<GLuint> frameBuffer{};
 
 		int32_t MAX_COLOR_ATTACHMENTS;
 
 		State();
 
-		void setState(Configuration const& config);
+		void setConfiguration(Configuration const& config);
 
 		void setBlend(BLEND b);
 		void setBlendFunc(BLEND_FUNC func);

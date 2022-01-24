@@ -1,5 +1,5 @@
 // render - A C++ OpenGL library
-// Copyright (C) 2021  Intrets
+// Copyright (C) 2022  Intrets
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ namespace ogs
 		glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &this->MAX_COLOR_ATTACHMENTS);
 	}
 
-	void State::setState(Configuration const& config) {
+	void State::setConfiguration(Configuration const& config) {
 		this->setBlend(config.blend);
 		if (config.blend == BLEND::ENABLED) {
 			this->setBlendFunc(config.blendFunc);
@@ -152,10 +152,10 @@ namespace ogs
 			this->viewport = p;
 
 			glViewport(
-				static_cast<GLint>(this->viewport.x),
-				static_cast<GLint>(this->viewport.y),
-				static_cast<GLsizei>(this->viewport.z),
-				static_cast<GLsizei>(this->viewport.w)
+				static_cast<GLint>(this->viewport->x),
+				static_cast<GLint>(this->viewport->y),
+				static_cast<GLsizei>(this->viewport->z),
+				static_cast<GLsizei>(this->viewport->w)
 			);
 		}
 	}
@@ -164,7 +164,7 @@ namespace ogs
 		if (this->frameBuffer != id) {
 			this->frameBuffer = id;
 
-			glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer.value());
 		}
 	}
 
@@ -174,6 +174,9 @@ namespace ogs
 		this->configuration.depthTest = DEPTH_TEST::UNSET;
 		this->configuration.depthFunc = DEPTH_FUNC::UNSET;
 		this->configuration.polygonMode = POLYGON_MODE::UNSET;
+
+		this->viewport = std::nullopt;
+		this->frameBuffer = std::nullopt;
 	}
 
 	Configuration TextConfiguration() {
