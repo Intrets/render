@@ -16,8 +16,6 @@
 
 #include "GLStateWrapper.h"
 
-#include <wrangled_gl/wrangled_gl.h>
-
 #include <cassert>
 
 namespace ogs

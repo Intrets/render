@@ -16,7 +16,12 @@
 
 #pragma once
 
+#include <wrangled_gl/wrangled_gl.h>
+
+#include <wglm/glm.hpp>
+
 #include <cstdint>
+#include <optional>
 
 enum class BLEND
 {
