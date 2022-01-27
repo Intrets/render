@@ -32,12 +32,10 @@ namespace render
 		uint32_t c;
 	};
 
-	constexpr Color rgb(uint32_t r, uint32_t g, uint32_t b) {
-		return { r | (g << 8) | (b << 16) | 0xFF000000 };
-	}
-
 	template<class T>
-	constexpr T id(T t) { return t; };
+	constexpr T id(T t) {
+		return t;
+	};
 
 	constexpr Color toLinear(Color other) {
 		struct H
@@ -61,6 +59,22 @@ namespace render
 	using converterFunctionType = Color(*)(Color);
 	constexpr converterFunctionType converter = toLinear;
 
+	constexpr Color rgb(uint32_t r, uint32_t g, uint32_t b) {
+		return { r | (g << 8) | (b << 16) | 0xFF000000 };
+	}
+
+	constexpr Color crgb(uint32_t r, uint32_t g, uint32_t b) {
+		return converter(rgb(r, g, b));
+	}
+
+	constexpr Color rgba(uint32_t r, uint32_t g, uint32_t b, uint32_t a) {
+		return { r | (g << 8) | (b << 16) | (a << 24) };
+	}
+
+	constexpr Color crgba(uint32_t r, uint32_t g, uint32_t b, uint32_t a) {
+		return converter(rgba(r, g, b, a));
+	}
+
 	static constexpr Color red = converter({ 0xFF0000FF });
 	static constexpr Color green = converter({ 0xFF00FF00 });
 	static constexpr Color blue = converter({ 0xFFFF0000 });
@@ -80,6 +94,8 @@ namespace render
 	static constexpr Color gray_red = converter({ 0xFF404080 });
 	static constexpr Color gray_green = converter({ 0xFF408040 });
 	static constexpr Color gray_blue = converter({ 0xFF804040 });
+
+	static constexpr Color gray_translucent = converter(rgba(0, 0, 0, 100));
 
 
 	static constexpr std::array<Color, 5> nice_colors = {
