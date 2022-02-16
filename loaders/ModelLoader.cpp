@@ -140,17 +140,6 @@ namespace render
 
 		loadOBJ(path, vertices, uvs, normals);
 
-		//std::vector<uint16_t> indices;
-		//indices.resize(vertices.size());
-		//std::iota(indices.begin(), indices.end(), 0_u16);
-
-		//model.model.set(vertices);
-		//model.uv.set(uvs);
-		//model.normals.set(normals);
-		//model.indices.set(indices);
-
-		//model.indexSize = static_cast<decltype(model.indexSize)>(indices.size());
-
 		std::vector<uint16_t> out_indices;
 		std::vector<glm::vec3> out_vertices;
 		std::vector<glm::vec2> out_uvs;
