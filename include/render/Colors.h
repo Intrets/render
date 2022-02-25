@@ -96,6 +96,7 @@ namespace render
 	static constexpr Color gray_blue = converter({ 0xFF804040 });
 	static constexpr Color highlight_color = converter(rgb(100, 255, 255));
 	static constexpr Color shadow_color = converter(rgba(0, 0, 0, 150));
+	static constexpr Color transparent_dark = converter(rgba(0, 0, 0, 230));
 
 	static constexpr Color gray_translucent = converter(rgba(0, 0, 0, 100));
 
