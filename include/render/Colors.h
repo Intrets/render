@@ -91,6 +91,7 @@ namespace render
 	static constexpr Color light_gray = converter({ 0xFF404040 });
 	static constexpr Color gray = converter({ 0xFF808080 });
 	static constexpr Color dark_gray = converter({ 0xFFBFBFBF });
+	static constexpr Color darker_gray = converter({ 0xFF555555 });
 	static constexpr Color gray_red = converter({ 0xFF404080 });
 	static constexpr Color gray_green = converter({ 0xFF408040 });
 	static constexpr Color gray_blue = converter({ 0xFF804040 });
