@@ -19,7 +19,7 @@
 #include <fstream>
 #include <sstream>
 
-#include <mem/Global.h>
+#include <mem/LazyGlobal.h>
 
 #include <misc/PathManager.h>
 #include <misc/Logger.h>
@@ -131,25 +131,6 @@ namespace render
 		logger->acquire()->log(Logger::Level::status, "Creating Program {}\n", this->description);
 		this->ID = LoadShaders(vert_raw, static_cast<GLint>(vert_size), frag_raw, static_cast<GLint>(frag_size));
 		addProgram(*this);
-	}
-
-	bwo::Program::Program(std::string_view vert_name, std::string_view frag_file, std::string const& description_, int dummy) {
-		auto vert_path = Global<misc::PathManager>->getShadersPath() / vert_name;
-		auto frag_path = Global<misc::PathManager>->getShadersPath() / frag_file;
-
-		this->getVertexBuffer = [=]() {
-			return readFile(vert_path);
-		};
-		this->getFragmentBuffer = [=]() {
-			return readFile(frag_path);
-		};
-
-		this->description = description_;
-		logger->acquire()->log(Logger::Level::status, "Creating Program {}\n", this->description);
-
-		[[maybe_unused]]
-		bool b = this->refreshShaders();
-		assert(b);
 	}
 
 	bwo::Program::Program(BufferGenerator vertexGenerator, BufferGenerator fragmentGenerator, std::string_view description_) {
@@ -273,7 +254,7 @@ namespace render
 	}
 
 	static auto getAttachmentEnum(int32_t number) {
-		assert(Global<ogs::State>->MAX_COLOR_ATTACHMENTS > number);
+		assert(LazyGlobal<ogs::State>->MAX_COLOR_ATTACHMENTS > number);
 
 		GLenum attachment = GL_COLOR_ATTACHMENT0;
 		switch (number) {
@@ -309,10 +290,10 @@ namespace render
 	}
 
 	void bwo::FrameBuffer::bindTextureColor(int32_t attachmentNumber, bwo::Texture2D const& texture, GLint mipmap) {
-		assert(Global<ogs::State>->MAX_COLOR_ATTACHMENTS > attachmentNumber);
+		assert(LazyGlobal<ogs::State>->MAX_COLOR_ATTACHMENTS > attachmentNumber);
 
 		this->size = texture.size;
-		Global<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
 		glFramebufferTexture(GL_FRAMEBUFFER, getAttachmentEnum(attachmentNumber), texture.ID, mipmap);
 	}
 
@@ -320,7 +301,7 @@ namespace render
 		this->size.x = texture.size.x;
 		this->size.y = texture.size.y;
 
-		Global<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
 		glFramebufferTextureLayer(GL_FRAMEBUFFER, getAttachmentEnum(attachmentNumber), texture.ID, mipmap, layer);
 	}
 
@@ -328,19 +309,19 @@ namespace render
 		this->size.x = texture.size.x;
 		this->size.y = texture.size.y;
 
-		Global<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture.ID, 0);
 	}
 
 	void bwo::FrameBuffer::draw(glm::ivec4 viewport, std::function<void()> f) {
-		Global<ogs::State>->setFrameBuffer(this->ID);
-		Global<ogs::State>->setViewport(viewport);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setViewport(viewport);
 
 		f();
 	}
 
 	void bwo::FrameBuffer::clear(glm::vec4 color, bool depth) {
-		Global<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
 		glClearColor(color.r, color.g, color.b, color.a);
 		if (depth) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -351,7 +332,7 @@ namespace render
 	}
 
 	void bwo::FrameBuffer::clearDepth() {
-		Global<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
@@ -545,12 +526,12 @@ namespace render
 	namespace bwo
 	{
 		Program::ScopedProgram::ScopedProgram(GLint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
-			Global<ogs::State>->setProgram(id);
+			LazyGlobal<ogs::State>->setProgram(id);
 		}
 
 		Program::ScopedProgram::~ScopedProgram() {
 			if (this->resetOnDestruct) {
-				Global<ogs::State>->setProgram(0);
+				LazyGlobal<ogs::State>->setProgram(0);
 			}
 		}
 	}
