@@ -185,7 +185,7 @@ namespace render
 			std::string description{};
 
 		public:
-			static std::unordered_map<int32_t, std::vector<Program*>> refs;
+			static std::unordered_map<int32_t, Program*> refs;
 			static std::string listAll();
 			static std::optional<Program const*> lookup(int32_t id);
 			static void change(GLuint ID, Program& to);
