@@ -32,13 +32,15 @@
 
 namespace render
 {
-	std::unordered_map<int32_t, bwo::Program*> bwo::Program::refs;
+	std::unordered_map<int32_t, std::vector<bwo::Program*>> bwo::Program::refs;
 
 	std::string bwo::Program::listAll() {
 		std::stringstream out;
 
-		for (auto& [index, program] : bwo::Program::refs) {
-			out << "ID: " << index << '\n' << program->description << "\n\n";
+		for (auto& [index, programs] : bwo::Program::refs) {
+			if (!programs.empty()) {
+				out << "ID: " << index << '\n' << programs.front()->description << "\n\n";
+			}
 		}
 
 		return out.str();
@@ -61,8 +63,8 @@ namespace render
 
 	bool bwo::Program::refreshAll() {
 		std::vector<Program*> programs;
-		for (auto [i, program] : refs) {
-			programs.push_back(program);
+		for (auto& [i, ps] : refs) {
+			programs.insert(programs.begin(), ps.begin(), ps.end());
 		}
 
 		bool success = true;
@@ -78,7 +80,7 @@ namespace render
 	void bwo::Program::addProgram(Program& program) {
 		assert(program.ID != 0);
 		assert(!lookup(program.ID).has_value());
-		refs[program.ID] = &program;
+		refs[program.ID].push_back(&program);
 	}
 
 	void bwo::Program::change(GLuint ID, Program& to) {
@@ -94,7 +96,7 @@ namespace render
 			return;
 		}
 		assert(lookup(program.ID).has_value());
-		refs.erase(program.ID);
+		std::erase(refs[program.ID], &program);
 		glDeleteProgram(program.ID);
 	}
 
@@ -273,7 +275,7 @@ namespace render
 	}
 
 	static auto getAttachmentEnum(int32_t number) {
-		assert(Global<ogs::State>->MAX_COLOR_ATTACHMENTS > number);
+		assert(LazyGlobal<ogs::State>->MAX_COLOR_ATTACHMENTS > number);
 
 		GLenum attachment = GL_COLOR_ATTACHMENT0;
 		switch (number) {
@@ -309,10 +311,10 @@ namespace render
 	}
 
 	void bwo::FrameBuffer::bindTextureColor(int32_t attachmentNumber, bwo::Texture2D const& texture, GLint mipmap) {
-		assert(Global<ogs::State>->MAX_COLOR_ATTACHMENTS > attachmentNumber);
+		assert(LazyGlobal<ogs::State>->MAX_COLOR_ATTACHMENTS > attachmentNumber);
 
 		this->size = texture.size;
-		Global<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
 		glFramebufferTexture(GL_FRAMEBUFFER, getAttachmentEnum(attachmentNumber), texture.ID, mipmap);
 	}
 
@@ -320,7 +322,7 @@ namespace render
 		this->size.x = texture.size.x;
 		this->size.y = texture.size.y;
 
-		Global<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
 		glFramebufferTextureLayer(GL_FRAMEBUFFER, getAttachmentEnum(attachmentNumber), texture.ID, mipmap, layer);
 	}
 
@@ -328,19 +330,19 @@ namespace render
 		this->size.x = texture.size.x;
 		this->size.y = texture.size.y;
 
-		Global<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture.ID, 0);
 	}
 
 	void bwo::FrameBuffer::draw(glm::ivec4 viewport, std::function<void()> f) {
-		Global<ogs::State>->setFrameBuffer(this->ID);
-		Global<ogs::State>->setViewport(viewport);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setViewport(viewport);
 
 		f();
 	}
 
 	void bwo::FrameBuffer::clear(glm::vec4 color, bool depth) {
-		Global<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
 		glClearColor(color.r, color.g, color.b, color.a);
 		if (depth) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -351,7 +353,7 @@ namespace render
 	}
 
 	void bwo::FrameBuffer::clearDepth() {
-		Global<ogs::State>->setFrameBuffer(this->ID);
+		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
@@ -545,12 +547,12 @@ namespace render
 	namespace bwo
 	{
 		Program::ScopedProgram::ScopedProgram(GLint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
-			Global<ogs::State>->setProgram(id);
+			LazyGlobal<ogs::State>->setProgram(id);
 		}
 
 		Program::ScopedProgram::~ScopedProgram() {
 			if (this->resetOnDestruct) {
-				Global<ogs::State>->setProgram(0);
+				LazyGlobal<ogs::State>->setProgram(0);
 			}
 		}
 	}

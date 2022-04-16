@@ -22,12 +22,12 @@
 namespace render
 {
 	render::ScopedVAO::ScopedVAO(GLuint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
-		Global<ogs::State>->setVAO(id);
+		LazyGlobal<ogs::State>->setVAO(id);
 	}
 
 	ScopedVAO::~ScopedVAO() {
 		if (this->resetOnDestruct) {
-			Global<ogs::State>->setVAO(0);
+			LazyGlobal<ogs::State>->setVAO(0);
 		}
 	}
 }

@@ -44,7 +44,7 @@ namespace render
 		GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 
 		GLint Result = GL_FALSE;
-		int32_t InfoLogLength;
+		int32_t InfoLogLength = 0;
 
 		// Compile Vertex Shader
 		glShaderSource(VertexShaderID, 1, &vertex_raw, &vertex_size);
