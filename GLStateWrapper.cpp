@@ -16,6 +16,8 @@
 
 #include "GLStateWrapper.h"
 
+#include "BufferWrappers.h"
+
 #include <cassert>
 
 namespace ogs
@@ -197,8 +199,8 @@ namespace ogs
 		}
 	}
 
-	bool State::isProgramBound(GLint id) const {
-		return this->program.has_value() && this->program == id;
+	bool State::isProgramBound(render::bwo::Program const& p) const {
+		return this->program.has_value() && this->program == p.ID;
 	}
 
 	bool State::isVAOBound(GLint id) const {
@@ -368,5 +370,80 @@ namespace ogs
 		depthFunc(depthFunc_),
 		polygonMode(polygonMode_),
 		pointSize(pointSize_) {
+	}
+
+	std::string ProgramRegistry::listAll() {
+		std::stringstream out;
+
+		for (auto& [index, program] : this->programs) {
+			out << "ID: " << index << '\n' << program->getDescription() << "\n\n";
+		}
+
+		return out.str();
+	}
+
+	te::optional_ref<render::bwo::Program> ProgramRegistry::lookup(GLint ID) {
+		auto it = this->programs.find(ID);
+
+		if (it == this->programs.end()) {
+			return te::nullopt;
+		}
+		else {
+			return *it->second;
+		}
+	}
+
+	te::optional_ref<render::bwo::Program> ProgramRegistry::lookup(Program const& program) {
+		return this->lookup(program.ID);
+	}
+
+	bool ProgramRegistry::refreshAll() {
+		std::vector<Program*> refreshPrograms;
+		for (auto [i, program] : this->programs) {
+			refreshPrograms.push_back(program);
+		}
+
+		bool success = true;
+		for (auto program : refreshPrograms) {
+			if (!program->refreshShaders()) {
+				success = false;
+			}
+		}
+
+		return success;
+	}
+
+	void ProgramRegistry::change(GLint ID, Program& to) {
+		if (ID == 0) {
+			return;
+		}
+
+		assert(this->lookup(ID).has_value());
+
+		this->programs[ID] = &to;
+	}
+
+	void ProgramRegistry::registerProgram(Program& program) {
+		assert(program.isNotNull());
+		assert(this->lookup(program).has_no_value());
+
+		this->programs[program.ID] = &program;
+	}
+
+	void ProgramRegistry::deleteProgram(Program& program) {
+		if (program.isNotNull()) {
+			assert(this->lookup(program).has_value());
+
+			this->programs.erase(program.ID);
+			glDeleteProgram(program.ID);
+		}
+	}
+
+	bool ProgramRegistry::operator==(ProgramRegistry const& other) const {
+		return this == &other;
+	}
+
+	bool State::operator==(State const& other) const {
+		return this == &other;
 	}
 }

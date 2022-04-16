@@ -20,6 +20,8 @@
 
 #include <wglm/glm.hpp>
 
+#include <tepp/optional_ref.h>
+
 #include <cstdint>
 #include <optional>
 
@@ -66,6 +68,11 @@ enum class POLYGON_MODE
 	MAX,
 };
 
+namespace render::bwo
+{
+	class Program;
+}
+
 namespace ogs
 {
 	class State;
@@ -109,18 +116,45 @@ namespace ogs
 	Configuration BlitConfiguration();
 	Configuration NinesConfiguration();
 
+	class ProgramRegistry
+	{
+	private:
+		using Program = render::bwo::Program;
+
+		std::unordered_map<GLint, Program*> programs;
+
+	public:
+		std::string listAll();
+		te::optional_ref<Program> lookup(GLint ID);
+		te::optional_ref<Program> lookup(Program const& program);
+
+		[[nodiscard]]
+		bool refreshAll();
+
+		void change(GLint ID, Program& to);
+		void registerProgram(Program& program);
+		void deleteProgram(Program& program);
+
+		bool operator==(ProgramRegistry const& other) const;
+
+		ProgramRegistry() = default;
+		~ProgramRegistry() = default;
+
+		NO_COPY_MOVE(ProgramRegistry);
+	};
+
 	class State
 	{
 	public:
+		ProgramRegistry programRegistry{};
 		Configuration configuration{};
+
 		std::optional<glm::ivec4> viewport{};
 		std::optional<GLuint> frameBuffer{};
 		std::optional<GLint> vao{};
 		std::optional<GLint> program{};
 
 		int32_t MAX_COLOR_ATTACHMENTS;
-
-		State();
 
 		void setConfiguration(Configuration const& config);
 
@@ -135,9 +169,16 @@ namespace ogs
 		void setVAO(GLint id);
 		void setProgram(GLint id);
 
-		bool isProgramBound(GLint id) const;
+		bool isProgramBound(render::bwo::Program const& p) const;
 		bool isVAOBound(GLint id) const;
 
 		void flushState();
+
+		bool operator==(State const& other) const;
+
+		State();
+		~State() = default;
+
+		NO_COPY_MOVE(State);
 	};
 }

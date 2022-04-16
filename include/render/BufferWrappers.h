@@ -32,6 +32,12 @@
 
 #include "Colors.h"
 
+namespace ogs
+{
+	class ProgramRegistry;
+	class State;
+}
+
 namespace render
 {
 	namespace bwo
@@ -106,7 +112,6 @@ namespace render
 			Texture2D makeDepthBuffer(glm::ivec2 size);
 			Texture2D makeNoFiltering(glm::ivec2 size);
 			Texture2D makeLinearFiltering(glm::ivec2 size);
-			Texture2D makeMSLinearFiltering(glm::ivec2 size);
 			Texture2D makeFloatBuffer(glm::ivec2 size, bool filtering = false);
 		};
 
@@ -117,33 +122,18 @@ namespace render
 
 		class FrameBuffer
 		{
+		private:
+			ogs::State& openglState;
+
 		public:
 			GLuint ID = 0;
 			glm::ivec2 size{};
 
-			FrameBuffer();
-			FrameBuffer(int x, int y);
-			FrameBuffer(FrameBuffer&& other) {
-				this->ID = other.ID;
-				this->size = other.size;
+			FrameBuffer(ogs::State& openglState);
+			FrameBuffer(ogs::State& openglState, int x, int y);
+			FrameBuffer(FrameBuffer&& other);
+			FrameBuffer& operator=(FrameBuffer&& other);
 
-				other.ID = 0;
-				other.size = { 0,0 };
-			}
-			FrameBuffer& operator=(FrameBuffer&& other) {
-				if (this != &other) {
-					if (this->ID != 0) {
-						glDeleteFramebuffers(1, &this->ID);
-					}
-
-					this->ID = other.ID;
-					this->size = other.size;
-
-					other.ID = 0;
-					other.size = { 0,0 };
-				}
-				return *this;
-			}
 			NO_COPY(FrameBuffer);
 			~FrameBuffer();
 
@@ -167,9 +157,10 @@ namespace render
 			struct ScopedProgram
 			{
 				bool resetOnDestruct = false;
+				ogs::State& openglState;
 
 				ScopedProgram() = delete;
-				ScopedProgram(GLint id, bool resetOnDestruct_);
+				ScopedProgram(ogs::State& openglState_, GLint id, bool resetOnDestruct_);
 
 				~ScopedProgram();
 
@@ -177,6 +168,7 @@ namespace render
 			};
 
 			GLint ID = 0;
+			ogs::State& openglState;
 
 		private:
 			BufferGenerator getVertexBuffer;
@@ -185,62 +177,20 @@ namespace render
 			std::string description{};
 
 		public:
-			static std::unordered_map<int32_t, Program*> refs;
-			static std::string listAll();
-			static std::optional<Program const*> lookup(int32_t id);
-			static void change(GLuint ID, Program& to);
-			static void addProgram(Program& program);
-			static void deleteProgram(Program& program);
-			[[nodiscard]]
-			static bool refreshAll();
-
 			[[nodiscard]]
 			ScopedProgram bind(bool resetOnDestruct = false);
 			[[nodiscard]]
 			bool refreshShaders();
+			bool isNull() const;
+			bool isNotNull() const;
+			bool isBound() const;
 
-			Program() = default;
-			Program(char const* vert_raw, size_t vert_size, char const* frag_raw, size_t frag_size, std::string const& description);
-			Program(std::string_view vert_name, std::string_view frag_file, std::string const& description, int);
-			Program(BufferGenerator vertexGenerator, BufferGenerator fragmentGenerator, std::string_view description);
+			Program() = delete;
+			Program(ogs::State& openglState_, char const* vert_raw, size_t vert_size, char const* frag_raw, size_t frag_size, std::string const& description);
+			Program(ogs::State& openglState_, BufferGenerator vertexGenerator, BufferGenerator fragmentGenerator, std::string_view description);
 
-			Program(Program&& other) {
-				change(other.ID, *this);
-
-				this->ID = other.ID;
-				this->description = other.description;
-
-				this->getFragmentBuffer = other.getFragmentBuffer;
-				this->getVertexBuffer = other.getVertexBuffer;
-
-				other.ID = 0;
-				other.description = {};
-
-				other.getFragmentBuffer = {};
-				other.getVertexBuffer = {};
-			};
-
-			Program& operator=(Program&& other) {
-				if (this != &other) {
-					if (this->ID != 0) {
-						deleteProgram(*this);
-					}
-					change(other.ID, *this);
-
-					this->ID = other.ID;
-					this->description = other.description;
-
-					this->getFragmentBuffer = other.getFragmentBuffer;
-					this->getVertexBuffer = other.getVertexBuffer;
-
-					other.ID = 0;
-					other.description = {};
-
-					other.getFragmentBuffer = {};
-					other.getVertexBuffer = {};
-				}
-				return *this;
-			};
+			Program(Program&& other);
+			Program& operator=(Program&& other);
 
 			std::string_view getDescription() const;
 

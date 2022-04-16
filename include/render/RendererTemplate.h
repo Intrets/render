@@ -70,8 +70,8 @@ namespace render
 	struct UniformBase
 	{
 		std::optional<T> storage = std::nullopt;
-		std::string name;
-		GLint programID = 0;
+		std::string name{};
+		te::optional_ref<bwo::Program> program{};
 
 		static constexpr inline GLint invalid_location = -1;
 		GLint location = invalid_location;
@@ -81,18 +81,18 @@ namespace render
 		UniformBase(std::string_view name_) : name(name_) {
 		}
 
-		void init(bwo::Program const& program) {
+		void init(bwo::Program& program_) {
 			assert(!this->name.empty());
 			assert(this->location == invalid_location);
-			this->location = glGetUniformLocation(program.ID, this->name.c_str());
-			this->programID = program.ID;
+			this->location = glGetUniformLocation(program_.ID, this->name.c_str());
+			this->program = program_;
 			assert(this->location != invalid_location);
 		};
 
 		void setFromOther(UniformBase<T, phantom> const& other) {
 			assert(this->location != invalid_location);
 			assert(other.location == invalid_location);
-			assert(LazyGlobal<ogs::State>->isProgramBound(this->programID));
+			assert(this->program.has_value() && this->program.value().isBound());
 
 			if (other.storage.has_value()) {
 				this->setFromOtherImpl(other.storage.value());
@@ -110,7 +110,7 @@ namespace render
 	using Uniform1f = UniformBase<float>;
 	template<>
 	inline void Uniform1f::setFromOtherImpl(float const& other) {
-		assert(LazyGlobal<ogs::State>->isProgramBound(this->programID));
+		assert(this->program.has_value() && this->program.value().isBound());
 
 		glUniform1f(this->location, other);
 	}
@@ -118,7 +118,7 @@ namespace render
 	using Uniform2f = UniformBase<glm::vec2>;
 	template<>
 	inline void Uniform2f::setFromOtherImpl(glm::vec2 const& other) {
-		assert(LazyGlobal<ogs::State>->isProgramBound(this->programID));
+		assert(this->program.has_value() && this->program.value().isBound());
 
 		glUniform2fv(this->location, 1, &other[0]);
 	}
@@ -126,7 +126,7 @@ namespace render
 	using Uniform4fv = UniformBase<std::vector<glm::vec4>>;
 	template<>
 	inline void Uniform4fv::setFromOtherImpl(std::vector<glm::vec4> const& other) {
-		assert(LazyGlobal<ogs::State>->isProgramBound(this->programID));
+		assert(this->program.has_value() && this->program.value().isBound());
 		assert(!other.empty());
 
 		glUniform4fv(this->location, static_cast<GLsizei>(other.size()), &other[0][0]);
@@ -146,7 +146,7 @@ namespace render
 
 	template<>
 	inline void UniformTexture2D::setFromOtherImpl(GLuint const& other) {
-		assert(LazyGlobal<ogs::State>->isProgramBound(this->programID));
+		assert(this->program.has_value() && this->program.value().isBound());
 
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
@@ -159,7 +159,7 @@ namespace render
 
 	template<>
 	inline void UniformTexture2DArray::setFromOtherImpl(GLuint const& other) {
-		assert(LazyGlobal<ogs::State>->isProgramBound(this->programID));
+		assert(this->program.has_value() && this->program.value().isBound());
 
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
@@ -172,7 +172,7 @@ namespace render
 
 	template<>
 	inline void UniformTexture3D::setFromOtherImpl(GLuint const& other) {
-		assert(LazyGlobal<ogs::State>->isProgramBound(this->programID));
+		assert(this->program.has_value() && this->program.value().isBound());
 
 		auto unit = *LazyGlobal<int, description::TexturesBound>;
 
@@ -186,7 +186,7 @@ namespace render
 	using UniformMatrix4f = UniformBase<glm::mat4>;
 	template<>
 	inline void UniformMatrix4f::setFromOtherImpl(glm::mat4 const& other) {
-		assert(LazyGlobal<ogs::State>->isProgramBound(this->programID));
+		assert(this->program.has_value() && this->program.value().isBound());
 
 		glUniformMatrix4fv(this->location, 1, GL_FALSE, &other[0][0]);
 	}
@@ -393,12 +393,11 @@ namespace render
 
 	struct ScopedVAO
 	{
-		inline static GLuint current = 0;
-
 		bool resetOnDestruct = false;
+		ogs::State& openglState;
 
 		ScopedVAO() = delete;
-		ScopedVAO(GLuint id, bool resetOnDestruct_);
+		ScopedVAO(ogs::State& openglState, GLuint id, bool resetOnDestruct_);
 
 		~ScopedVAO();
 
@@ -409,13 +408,14 @@ namespace render
 	struct VAO
 	{
 		GLuint id = 0;
+		ogs::State& openglState;
 
 		[[nodiscard]]
 		ScopedVAO bind(bool resetOnDestruct = false) {
-			return ScopedVAO(this->id, resetOnDestruct);
+			return ScopedVAO(openglState, this->id, resetOnDestruct);
 		}
 
-		VAO(std::tuple<Buffers...>& buffers) {
+		VAO(ogs::State& openglState_, std::tuple<Buffers...>& buffers) : openglState(openglState_) {
 			glGenVertexArrays(1, &this->id);
 
 			auto bind = this->bind();
@@ -517,7 +517,10 @@ namespace render
 		struct RendererVAO
 		{
 			std::tuple<Buffers...> buffers;
-			VAO<Buffers...> vao{ buffers };
+			VAO<Buffers...> vao;
+
+			RendererVAO(ogs::State& openglState) : vao(openglState, this->buffers) {
+			}
 
 			auto bind(bool resetOnDestruct = false) {
 				return this->vao.bind(resetOnDestruct);
@@ -558,6 +561,7 @@ namespace render
 			Uniforms uniforms;
 
 			RendererProgram(
+				ogs::State& openglState,
 				bwo::Program::BufferGenerator vertexGenerator,
 				bwo::Program::BufferGenerator fragmentGenerator,
 				std::string_view description
@@ -621,8 +625,13 @@ namespace render
 	};
 
 	template<class Uniforms, int mode, class... Buffers>
-	inline Renderer2<Uniforms, mode, Buffers...>::RendererProgram::RendererProgram(bwo::Program::BufferGenerator vertexGenerator, bwo::Program::BufferGenerator fragmentGenerator, std::string_view description)
-		: program(vertexGenerator, fragmentGenerator, description) {
+	inline Renderer2<Uniforms, mode, Buffers...>::RendererProgram::RendererProgram(
+		ogs::State& openglState,
+		bwo::Program::BufferGenerator vertexGenerator,
+		bwo::Program::BufferGenerator fragmentGenerator,
+		std::string_view description
+	)
+		: program(openglState, vertexGenerator, fragmentGenerator, description) {
 
 		if constexpr (Uniforms::member_count > 0) {
 			te::tuple_for_each(
@@ -680,7 +689,7 @@ namespace render
 			return;
 		}
 
-		LazyGlobal<ogs::State>->setConfiguration(config);
+		this->program.openglState.setConfiguration(config);
 
 		auto useVAO = vao.bind();
 		auto useProgram = this->program.bind();

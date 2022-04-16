@@ -21,13 +21,13 @@
 
 namespace render
 {
-	render::ScopedVAO::ScopedVAO(GLuint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
-		LazyGlobal<ogs::State>->setVAO(id);
+	render::ScopedVAO::ScopedVAO(ogs::State& openglState_, GLuint id, bool resetOnDestruct_) : openglState(openglState_), resetOnDestruct(resetOnDestruct_) {
+		this->openglState.setVAO(id);
 	}
 
 	ScopedVAO::~ScopedVAO() {
 		if (this->resetOnDestruct) {
-			LazyGlobal<ogs::State>->setVAO(0);
+			this->openglState.setVAO(0);
 		}
 	}
 }

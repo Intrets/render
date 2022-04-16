@@ -25,6 +25,7 @@
 #include <misc/Logger.h>
 
 #include <render/loaders/ShaderLoader.h>
+#include <render/GLStateWrapper.h>
 
 #include <resource_data/ReadFile.h>
 
@@ -32,70 +33,8 @@
 
 namespace render
 {
-	std::unordered_map<int32_t, bwo::Program*> bwo::Program::refs;
-
-	std::string bwo::Program::listAll() {
-		std::stringstream out;
-
-		for (auto& [index, program] : bwo::Program::refs) {
-			out << "ID: " << index << '\n' << program->description << "\n\n";
-		}
-
-		return out.str();
-	}
-
-	std::optional<bwo::Program const*> bwo::Program::lookup(int32_t id) {
-		auto it = bwo::Program::refs.find(id);
-
-		if (it == bwo::Program::refs.end()) {
-			return std::nullopt;
-		}
-		else {
-			return it->second;
-		}
-	}
-
 	bwo::Program::ScopedProgram bwo::Program::bind(bool resetOnDestruct) {
-		return ScopedProgram(this->ID, resetOnDestruct);
-	}
-
-	bool bwo::Program::refreshAll() {
-		std::vector<Program*> programs;
-		for (auto [i, program] : refs) {
-			programs.push_back(program);
-		}
-
-		bool success = true;
-		for (auto program : programs) {
-			if (!program->refreshShaders()) {
-				success = false;
-			}
-		}
-
-		return success;
-	}
-
-	void bwo::Program::addProgram(Program& program) {
-		assert(program.ID != 0);
-		assert(!lookup(program.ID).has_value());
-		refs[program.ID] = &program;
-	}
-
-	void bwo::Program::change(GLuint ID, Program& to) {
-		if (ID == 0) {
-			return;
-		}
-		assert(lookup(ID).has_value());
-		refs[ID] = &to;
-	}
-
-	void bwo::Program::deleteProgram(Program& program) {
-		if (program.ID == 0) {
-			return;
-		}
-		assert(lookup(program.ID).has_value());
-		refs.erase(program.ID);
-		glDeleteProgram(program.ID);
+		return ScopedProgram(this->openglState, this->ID, resetOnDestruct);
 	}
 
 	bool bwo::Program::refreshShaders() {
@@ -108,7 +47,7 @@ namespace render
 		auto const& fragBuffer = maybeFragBuffer.value();
 		auto const& vertBuffer = maybeVertBuffer.value();
 
-		deleteProgram(*this);
+		this->openglState.programRegistry.deleteProgram(*this);
 		logger->acquire()->log(Logger::Level::status, "Refreshing shaders of Program {}\n", this->description);
 
 		this->ID = LoadShaders(
@@ -117,23 +56,45 @@ namespace render
 			fragBuffer->getData<char>(),
 			static_cast<GLint>(fragBuffer->getSize<char>())
 		);
-		addProgram(*this);
+		this->openglState.programRegistry.registerProgram(*this);
 
 		return true;
 	}
 
+	bool bwo::Program::isNull() const {
+		return this->ID == 0;
+	}
+
+	bool bwo::Program::isNotNull() const {
+		return this->ID != 0;
+	}
+
+	bool bwo::Program::isBound() const {
+		return this->openglState.isProgramBound(*this);
+	}
+
 	bwo::Program::Program(
+		ogs::State& openglState_,
 		char const* vert_raw, size_t vert_size,
 		char const* frag_raw, size_t frag_size,
 		std::string const& description_
-	) {
+	)
+		: openglState(openglState_) {
+
 		this->description = description_;
 		logger->acquire()->log(Logger::Level::status, "Creating Program {}\n", this->description);
 		this->ID = LoadShaders(vert_raw, static_cast<GLint>(vert_size), frag_raw, static_cast<GLint>(frag_size));
-		addProgram(*this);
+		this->openglState.programRegistry.registerProgram(*this);
 	}
 
-	bwo::Program::Program(BufferGenerator vertexGenerator, BufferGenerator fragmentGenerator, std::string_view description_) {
+	bwo::Program::Program(
+		ogs::State& openglState_,
+		BufferGenerator vertexGenerator,
+		BufferGenerator fragmentGenerator,
+		std::string_view description_
+	)
+		: openglState(openglState_) {
+
 		this->getVertexBuffer = vertexGenerator;
 		this->getFragmentBuffer = fragmentGenerator;
 
@@ -145,12 +106,50 @@ namespace render
 		assert(b);
 	}
 
+	bwo::Program::Program(Program&& other) : openglState(other.openglState) {
+		this->openglState.programRegistry.change(other.ID, *this);
+
+		this->ID = other.ID;
+		this->description = other.description;
+
+		this->getFragmentBuffer = other.getFragmentBuffer;
+		this->getVertexBuffer = other.getVertexBuffer;
+
+		other.ID = 0;
+		other.description = {};
+
+		other.getFragmentBuffer = {};
+		other.getVertexBuffer = {};
+	}
+
+	bwo::Program& bwo::Program::operator=(Program&& other) {
+		if (this != &other) {
+			if (this->ID != 0) {
+				this->openglState.programRegistry.deleteProgram(*this);
+			}
+			this->openglState.programRegistry.change(other.ID, *this);
+
+			this->ID = other.ID;
+			this->description = other.description;
+
+			this->getFragmentBuffer = other.getFragmentBuffer;
+			this->getVertexBuffer = other.getVertexBuffer;
+
+			other.ID = 0;
+			other.description = {};
+
+			other.getFragmentBuffer = {};
+			other.getVertexBuffer = {};
+		}
+		return *this;
+	}
+
 	std::string_view bwo::Program::getDescription() const {
 		return this->description;
 	}
 
 	bwo::Program::~Program() {
-		deleteProgram(*this);
+		this->openglState.programRegistry.deleteProgram(*this);
 	}
 
 	bwo::UniformMatrix4fv::UniformMatrix4fv(std::string name, Program const& program) {
@@ -239,14 +238,40 @@ namespace render
 		this->location = glGetUniformLocation(program.ID, name.c_str());
 	}
 
-	bwo::FrameBuffer::FrameBuffer() {
+	bwo::FrameBuffer::FrameBuffer(ogs::State& openglState_) : openglState(openglState_) {
 		glGenFramebuffers(1, &this->ID);
 	}
 
-	bwo::FrameBuffer::FrameBuffer(int x, int y) {
+	bwo::FrameBuffer::FrameBuffer(ogs::State& openglState_, int x, int y) : openglState(openglState_) {
 		this->ID = 0;
 		this->size.x = x;
 		this->size.y = y;
+	}
+
+	inline bwo::FrameBuffer::FrameBuffer(FrameBuffer&& other) : openglState(other.openglState) {
+		this->ID = other.ID;
+		this->size = other.size;
+
+		other.ID = 0;
+		other.size = { 0,0 };
+	}
+
+	bwo::FrameBuffer& bwo::FrameBuffer::operator=(FrameBuffer&& other) {
+		assert(this->openglState == other.openglState);
+
+		if (this != &other) {
+			if (this->ID != 0) {
+				glDeleteFramebuffers(1, &this->ID);
+			}
+
+			this->ID = other.ID;
+			this->size = other.size;
+
+			other.ID = 0;
+			other.size = { 0,0 };
+		}
+
+		return *this;
 	}
 
 	bwo::FrameBuffer::~FrameBuffer() {
@@ -254,8 +279,6 @@ namespace render
 	}
 
 	static auto getAttachmentEnum(int32_t number) {
-		assert(LazyGlobal<ogs::State>->MAX_COLOR_ATTACHMENTS > number);
-
 		GLenum attachment = GL_COLOR_ATTACHMENT0;
 		switch (number) {
 			case 0:
@@ -290,10 +313,10 @@ namespace render
 	}
 
 	void bwo::FrameBuffer::bindTextureColor(int32_t attachmentNumber, bwo::Texture2D const& texture, GLint mipmap) {
-		assert(LazyGlobal<ogs::State>->MAX_COLOR_ATTACHMENTS > attachmentNumber);
+		assert(this->openglState.MAX_COLOR_ATTACHMENTS > attachmentNumber);
 
 		this->size = texture.size;
-		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
+		this->openglState.setFrameBuffer(this->ID);
 		glFramebufferTexture(GL_FRAMEBUFFER, getAttachmentEnum(attachmentNumber), texture.ID, mipmap);
 	}
 
@@ -301,7 +324,7 @@ namespace render
 		this->size.x = texture.size.x;
 		this->size.y = texture.size.y;
 
-		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
+		this->openglState.setFrameBuffer(this->ID);
 		glFramebufferTextureLayer(GL_FRAMEBUFFER, getAttachmentEnum(attachmentNumber), texture.ID, mipmap, layer);
 	}
 
@@ -309,19 +332,19 @@ namespace render
 		this->size.x = texture.size.x;
 		this->size.y = texture.size.y;
 
-		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
+		this->openglState.setFrameBuffer(this->ID);
 		glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, texture.ID, 0);
 	}
 
 	void bwo::FrameBuffer::draw(glm::ivec4 viewport, std::function<void()> f) {
-		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
-		LazyGlobal<ogs::State>->setViewport(viewport);
+		this->openglState.setFrameBuffer(this->ID);
+		this->openglState.setViewport(viewport);
 
 		f();
 	}
 
 	void bwo::FrameBuffer::clear(glm::vec4 color, bool depth) {
-		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
+		this->openglState.setFrameBuffer(this->ID);
 		glClearColor(color.r, color.g, color.b, color.a);
 		if (depth) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -332,7 +355,7 @@ namespace render
 	}
 
 	void bwo::FrameBuffer::clearDepth() {
-		LazyGlobal<ogs::State>->setFrameBuffer(this->ID);
+		this->openglState.setFrameBuffer(this->ID);
 		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
@@ -355,7 +378,7 @@ namespace render
 		glGenTextures(1, &this->ID);
 		glBindTexture(GL_TEXTURE_2D, this->ID);
 
-		int32_t maxSize;
+		int32_t maxSize = 0;
 		glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxSize);
 
 		this->size = glm::min(glm::ivec2(maxSize), size_);
@@ -525,13 +548,13 @@ namespace render
 
 	namespace bwo
 	{
-		Program::ScopedProgram::ScopedProgram(GLint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_) {
-			LazyGlobal<ogs::State>->setProgram(id);
+		Program::ScopedProgram::ScopedProgram(ogs::State& openglState_, GLint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_), openglState(openglState_) {
+			this->openglState.setProgram(id);
 		}
 
 		Program::ScopedProgram::~ScopedProgram() {
 			if (this->resetOnDestruct) {
-				LazyGlobal<ogs::State>->setProgram(0);
+				this->openglState.setProgram(0);
 			}
 		}
 	}
