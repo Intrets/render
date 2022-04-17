@@ -22,8 +22,11 @@
 
 #include <tepp/optional_ref.h>
 
+#include <misc/Misc.h>
+
 #include <cstdint>
 #include <optional>
+#include <unordered_map>
 
 enum class BLEND
 {
@@ -119,21 +122,19 @@ namespace ogs
 	class ProgramRegistry
 	{
 	private:
-		using Program = render::bwo::Program;
-
-		std::unordered_map<GLint, Program*> programs;
+		std::unordered_map<GLint, render::bwo::Program*> programs;
 
 	public:
 		std::string listAll();
-		te::optional_ref<Program> lookup(GLint ID);
-		te::optional_ref<Program> lookup(Program const& program);
+		te::optional_ref<render::bwo::Program> lookup(GLint ID);
+		te::optional_ref<render::bwo::Program> lookup(render::bwo::Program const& program);
 
 		[[nodiscard]]
 		bool refreshAll();
 
-		void change(GLint ID, Program& to);
-		void registerProgram(Program& program);
-		void deleteProgram(Program& program);
+		void change(GLint ID, render::bwo::Program& to);
+		void registerProgram(render::bwo::Program& program);
+		void deleteProgram(render::bwo::Program& program);
 
 		bool operator==(ProgramRegistry const& other) const;
 

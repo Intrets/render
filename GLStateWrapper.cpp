@@ -393,12 +393,12 @@ namespace ogs
 		}
 	}
 
-	te::optional_ref<render::bwo::Program> ProgramRegistry::lookup(Program const& program) {
+	te::optional_ref<render::bwo::Program> ProgramRegistry::lookup(render::bwo::Program const& program) {
 		return this->lookup(program.ID);
 	}
 
 	bool ProgramRegistry::refreshAll() {
-		std::vector<Program*> refreshPrograms;
+		std::vector<render::bwo::Program*> refreshPrograms;
 		for (auto [i, program] : this->programs) {
 			refreshPrograms.push_back(program);
 		}
@@ -413,7 +413,7 @@ namespace ogs
 		return success;
 	}
 
-	void ProgramRegistry::change(GLint ID, Program& to) {
+	void ProgramRegistry::change(GLint ID, render::bwo::Program& to) {
 		if (ID == 0) {
 			return;
 		}
@@ -423,14 +423,14 @@ namespace ogs
 		this->programs[ID] = &to;
 	}
 
-	void ProgramRegistry::registerProgram(Program& program) {
+	void ProgramRegistry::registerProgram(render::bwo::Program& program) {
 		assert(program.isNotNull());
 		assert(this->lookup(program).has_no_value());
 
 		this->programs[program.ID] = &program;
 	}
 
-	void ProgramRegistry::deleteProgram(Program& program) {
+	void ProgramRegistry::deleteProgram(render::bwo::Program& program) {
 		if (program.isNotNull()) {
 			assert(this->lookup(program).has_value());
 
