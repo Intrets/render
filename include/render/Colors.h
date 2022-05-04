@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include <wglm/glm.hpp>
-
 #include <string>
 #include <concepts>
 #include <bit>

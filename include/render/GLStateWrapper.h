@@ -18,7 +18,7 @@
 
 #include <wrangled_gl/wrangled_gl.h>
 
-#include <wglm/glm.hpp>
+#include <wglm/vec4.hpp>
 
 #include <tepp/optional_ref.h>
 

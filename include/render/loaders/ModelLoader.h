@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include <wglm/glm.hpp>
+#include <wglm/vec2.hpp>
+#include <wglm/vec3.hpp>
 
 #include <vector>
 #include <string_view>

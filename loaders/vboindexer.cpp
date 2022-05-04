@@ -23,7 +23,8 @@
 #include <vector>
 #include <map>
 
-#include <wglm/glm.hpp>
+#include <wglm/vec2.hpp>
+#include <wglm/vec3.hpp>
 
 #include <string.h> // for memcmp
 

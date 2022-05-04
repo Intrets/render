@@ -18,7 +18,9 @@
 
 #include <wrangled_gl/wrangled_gl.h>
 
-#include <wglm/glm.hpp>
+#include <wglm/vec2.hpp>
+#include <wglm/vec3.hpp>
+#include <wglm/mat4x4.hpp>
 
 #include <optional>
 #include <functional>

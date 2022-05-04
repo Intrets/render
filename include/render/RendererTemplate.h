@@ -25,7 +25,11 @@
 #include <tepp/dest.h>
 #include <tepp/enum_bitflags.h>
 
-#include <wglm/glm.hpp>
+#include <wglm/vec2.hpp>
+#include <wglm/vec3.hpp>
+#include <wglm/vec4.hpp>
+#include <wglm/mat4x4.hpp>
+#include <wglm/mat3x3.hpp>
 
 #include <misc/Logger.h>
 
