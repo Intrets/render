@@ -1,5 +1,5 @@
 // render - A C++ OpenGL library
-// Copyright (C) 2021  Intrets
+// Copyright (C) 2022  Intrets
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,15 +23,17 @@
 #include <string_view>
 
 #include "render/BufferWrappers.h"
+#include "render/RendererTemplate.h"
+
+#include <memory>
+#include <resource_data/ResourceData.h>
 
 namespace render
 {
 	bool loadOBJ(
-		std::string_view path,
-		std::vector<glm::vec3>& out_vertices,
-		std::vector<glm::vec2>& out_uvs,
-		std::vector<glm::vec3>& out_normals
+		std::unique_ptr<Buffer> const& buffer,
+		std::vector<render::Vertex3>& out_vertices,
+		std::vector<render::Vertex2>& out_uvs,
+		std::vector<render::Vertex3>& out_normals
 	);
-
-	bwo::Model loadModel(std::string_view path);
 }

@@ -30,6 +30,7 @@ make_module(
 		RendererTemplate
 		loaders/ShaderLoader
 		loaders/TextureLoader
+		loaders/ModelLoader
 		Colors
 		SRGBConversion
 	CXX_STANDARD 20

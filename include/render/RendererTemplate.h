@@ -365,6 +365,28 @@ namespace render
 			}
 		};
 
+		template<size_t size>
+		struct applyVertexInfo<glm::mat4, size>
+		{
+			static void run(VertexInfoState& state) {
+				static_assert(size == 1);
+				for (size_t i = 0; i < 4; i++) {
+					glVertexAttribPointer(
+						state.index,
+						static_cast<GLint>(4),
+						GL_FLOAT,
+						GL_FALSE,
+						state.stride,
+						(void*)state.offset
+					);
+					glVertexAttribDivisor(state.index, state.divisor);
+					glEnableVertexAttribArray(state.index);
+
+					state.index++;
+					state.offset += sizeof(float) * 4;
+				}
+			}
+		};
 	}
 
 	template<class T>
@@ -390,8 +412,11 @@ namespace render
 		else if constexpr (std::same_as<T, glm::mat3>) {
 			detail::applyVertexInfo<glm::mat3, 1>::run(state);
 		}
+		else if constexpr (std::same_as<T, glm::mat4>) {
+			detail::applyVertexInfo<glm::mat4, 1>::run(state);
+		}
 		else {
-			//static_assert(0);
+			assert(0);
 		}
 	}
 
