@@ -1,5 +1,5 @@
 // render - A C++ OpenGL library
-// Copyright (C) 2021  Intrets
+// Copyright (C) 2022  Intrets
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,27 +20,23 @@
 
 #include "loaders/ModelLoader.h"
 
-#include <wrangled_gl/wrangled_gl.h>
-#include <GLFW/glfw3.h>
-
 #include <vector>
 #include <numeric>
 
-#include "loaders/vboindexer.h"
-
 #include <misc/Num.h>
+
+#include <cstdlib>
 
 namespace render
 {
 	bool loadOBJ(
-		std::string_view path_,
-		std::vector<glm::vec3>& out_vertices,
-		std::vector<glm::vec2>& out_uvs,
-		std::vector<glm::vec3>& out_normals
+		std::unique_ptr<Buffer> const& buffer,
+		std::vector<render::Vertex3>& out_vertices,
+		std::vector<render::Vertex2>& out_uvs,
+		std::vector<render::Vertex3>& out_normals
 	) {
-		std::string path{ path_ };
-
-		printf("Loading OBJ file %s...\n", path.c_str());
+		std::stringstream data;
+		data.write(buffer->getData<char>(), buffer->getSize<char>());
 
 		std::vector<unsigned int> vertexIndices, uvIndices, normalIndices;
 		std::vector<glm::vec3> temp_vertices;
@@ -48,48 +44,52 @@ namespace render
 		std::vector<glm::vec3> temp_normals;
 
 
-		FILE* file; //= fopen(path.c_str(), "r");
-		if (fopen_s(&file, path.c_str(), "r") != 0) {
-			printf("Impossible to open the file ! Are you in the right path ? See Tutorial 1 for details\n");
-			getchar();
-			return false;
-		}
-
 		while (1) {
-			char lineHeader[128];
+			std::string lineHeader;
 			// read the first word of the line
 			//int res = fscanf(file, "%s", lineHeader);
-			int res = fscanf_s(file, "%s", lineHeader, 128);
-			if (res == EOF)
-				break; // EOF = End Of File. Quit the loop.
+			data >> lineHeader;
 
-					   // else : parse lineHeader
+			if (data.eof()) {
+				break;
+			}
 
-			if (strcmp(lineHeader, "v") == 0) {
+			if (lineHeader == "v") {
 				glm::vec3 vertex;
-				fscanf_s(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
+				data >> vertex.x;
+				data >> vertex.y;
+				data >> vertex.z;
 				temp_vertices.push_back(vertex);
 			}
-			else if (strcmp(lineHeader, "vt") == 0) {
+			else if (lineHeader == "vt") {
 				glm::vec2 uv;
-				fscanf_s(file, "%f %f\n", &uv.x, &uv.y);
+				data >> uv.x;
+				data >> uv.y;
 				uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you want to use TGA or BMP loaders.
 				temp_uvs.push_back(uv);
 			}
-			else if (strcmp(lineHeader, "vn") == 0) {
+			else if (lineHeader == "vn") {
 				glm::vec3 normal;
-				fscanf_s(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
+				data >> normal.x;
+				data >> normal.y;
+				data >> normal.z;
 				temp_normals.push_back(normal);
 			}
-			else if (strcmp(lineHeader, "f") == 0) {
-				std::string vertex1, vertex2, vertex3;
+			else if (lineHeader == "f") {
 				unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
-				int matches = fscanf_s(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", &vertexIndex[0], &uvIndex[0], &normalIndex[0], &vertexIndex[1], &uvIndex[1], &normalIndex[1], &vertexIndex[2], &uvIndex[2], &normalIndex[2]);
-				if (matches != 9) {
+				for (size_t i = 0; i < 3; i++) {
+					data >> vertexIndex[i];
+					data.get();
+					data >> uvIndex[i];
+					data.get();
+					data >> normalIndex[i];
+				}
+
+				if (!data.good()) {
 					printf("File can't be read by our simple parser :-( Try exporting with other options\n");
-					fclose(file);
 					return false;
 				}
+
 				vertexIndices.push_back(vertexIndex[0]);
 				vertexIndices.push_back(vertexIndex[1]);
 				vertexIndices.push_back(vertexIndex[2]);
@@ -103,7 +103,7 @@ namespace render
 			else {
 				// Probably a comment, eat up the rest of the line
 				char sBuffer[1000];
-				fgets(sBuffer, 1000, file);
+				data.getline(sBuffer, 1000);
 			}
 
 		}
@@ -122,38 +122,11 @@ namespace render
 			glm::vec3 normal = temp_normals[normalIndex - 1];
 
 			// Put the attributes in buffers
-			out_vertices.push_back(vertex);
-			out_uvs.push_back(uv);
-			out_normals.push_back(normal);
+			out_vertices.push_back({ vertex });
+			out_uvs.push_back({ uv });
+			out_normals.push_back({ normal });
 
 		}
-		fclose(file);
 		return true;
-	}
-
-	bwo::Model loadModel(std::string_view path) {
-		bwo::Model model;
-
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec2> uvs;
-		std::vector<glm::vec3> normals; // Won't be used at the moment.
-
-		loadOBJ(path, vertices, uvs, normals);
-
-		std::vector<uint16_t> out_indices;
-		std::vector<glm::vec3> out_vertices;
-		std::vector<glm::vec2> out_uvs;
-		std::vector<glm::vec3> out_normals; // Won't be used at the moment.
-
-		indexVBO(vertices, uvs, normals, out_indices, out_vertices, out_uvs, out_normals);
-
-		model.model.set(out_vertices);
-		model.uv.set(out_uvs);
-		model.normals.set(out_normals);
-		model.indices.set(out_indices);
-
-		model.indexSize = static_cast<decltype(model.indexSize)>(out_indices.size());
-
-		return model;
 	}
 }
