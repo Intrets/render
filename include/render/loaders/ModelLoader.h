@@ -36,4 +36,22 @@ namespace render
 		std::vector<render::Vertex2>& out_uvs,
 		std::vector<render::Vertex3>& out_normals
 	);
+
+	struct IndexedModel
+	{
+		template<class T>
+		struct IndexedBuffer
+		{
+			std::vector<T> data{};
+			std::vector<uint32_t> indices{};
+		};
+
+		IndexedBuffer<render::Vertex3> vertices{};
+		IndexedBuffer<render::Vertex2> uvs{};
+		IndexedBuffer<render::Vertex3> normals{};
+	};
+
+	std::optional<IndexedModel> loadOBJ_indexed(
+		std::unique_ptr<Buffer> const& buffer
+	);
 }

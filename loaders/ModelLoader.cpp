@@ -129,4 +129,78 @@ namespace render
 		}
 		return true;
 	}
+
+	std::optional<IndexedModel> loadOBJ_indexed(std::unique_ptr<Buffer> const& buffer) {
+		std::stringstream data;
+		data.write(buffer->getData<char>(), buffer->getSize<char>());
+
+		IndexedModel result{};
+
+		while (1) {
+			std::string lineHeader;
+			// read the first word of the line
+			//int res = fscanf(file, "%s", lineHeader);
+			data >> lineHeader;
+
+			if (data.eof()) {
+				break;
+			}
+
+			if (lineHeader == "v") {
+				glm::vec3 vertex;
+				data >> vertex.x;
+				data >> vertex.y;
+				data >> vertex.z;
+				result.vertices.data.push_back({ vertex });
+			}
+			else if (lineHeader == "vt") {
+				glm::vec2 uv;
+				data >> uv.x;
+				data >> uv.y;
+				uv.y = -uv.y; // Invert V coordinate since we will only use DDS texture, which are inverted. Remove if you want to use TGA or BMP loaders.
+				result.uvs.data.push_back({ uv });
+			}
+			else if (lineHeader == "vn") {
+				glm::vec3 normal;
+				data >> normal.x;
+				data >> normal.y;
+				data >> normal.z;
+				result.normals.data.push_back({ normal });
+			}
+			else if (lineHeader == "f") {
+				unsigned int vertexIndex[3], uvIndex[3], normalIndex[3];
+				for (size_t i = 0; i < 3; i++) {
+					data >> vertexIndex[i];
+					data.get();
+					data >> uvIndex[i];
+					data.get();
+					data >> normalIndex[i];
+				}
+
+				if (!data.good()) {
+					printf("File can't be read by our simple parser :-( Try exporting with other options\n");
+					return std::nullopt;
+				}
+
+				result.vertices.indices.push_back(vertexIndex[0] - 1);
+				result.vertices.indices.push_back(vertexIndex[1] - 1);
+				result.vertices.indices.push_back(vertexIndex[2] - 1);
+
+				result.uvs.indices.push_back(uvIndex[0] - 1);
+				result.uvs.indices.push_back(uvIndex[1] - 1);
+				result.uvs.indices.push_back(uvIndex[2] - 1);
+				result.normals.indices.push_back(normalIndex[0] - 1);
+				result.normals.indices.push_back(normalIndex[1] - 1);
+				result.normals.indices.push_back(normalIndex[2] - 1);
+			}
+			else {
+				// Probably a comment, eat up the rest of the line
+				char sBuffer[1000];
+				data.getline(sBuffer, 1000);
+			}
+
+		}
+
+		return result;
+	}
 }
