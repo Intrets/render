@@ -114,6 +114,9 @@ namespace ogs
 				case DEPTH_FUNC::LEQUAL:
 					glDepthFunc(GL_LEQUAL);
 					break;
+				case DEPTH_FUNC::ALWAYS:
+					glDepthFunc(GL_ALWAYS);
+					break;
 				default:
 					assert(0);
 					break;

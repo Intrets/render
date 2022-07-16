@@ -59,6 +59,7 @@ enum class DEPTH_FUNC
 	UNSET,
 	LESS,
 	LEQUAL,
+	ALWAYS,
 	MAX,
 };
 

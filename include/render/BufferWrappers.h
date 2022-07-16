@@ -113,8 +113,12 @@ namespace render
 		{
 			Texture2D makeDepthBuffer(glm::ivec2 size);
 			Texture2D makeNoFiltering(glm::ivec2 size);
+			Texture2D makeAccumulateBuffer(glm::ivec2 size);
 			Texture2D makeLinearFiltering(glm::ivec2 size);
 			Texture2D makeFloatBuffer(glm::ivec2 size, bool filtering = false);
+			Texture2D makeVec2Buffer(glm::ivec2 size, bool filtering = false);
+			Texture2D makeVec3Buffer(glm::ivec2 size, bool filtering = false);
+			Texture2D makeVec4Buffer(glm::ivec2 size, bool filtering = false);
 		};
 
 		namespace Texture2DArrayHelper
