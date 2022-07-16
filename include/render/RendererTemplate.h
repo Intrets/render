@@ -90,12 +90,12 @@ namespace render
 			assert(this->location == invalid_location);
 			this->location = glGetUniformLocation(program_.ID, this->name.c_str());
 			this->program = program_;
-			assert(this->location != invalid_location);
+			//assert(this->location != invalid_location);
 		};
 
 		void setFromOther(UniformBase<T, phantom> const& other) {
-			assert(this->location != invalid_location);
-			assert(other.location == invalid_location);
+			//assert(this->location != invalid_location);
+			//assert(other.location == invalid_location);
 			assert(this->program.has_value() && this->program.value().isBound());
 
 			if (other.storage.has_value()) {
@@ -125,6 +125,14 @@ namespace render
 		assert(this->program.has_value() && this->program.value().isBound());
 
 		glUniform2fv(this->location, 1, &other[0]);
+	}
+
+	using Uniform3f = UniformBase<glm::vec3>;
+	template<>
+	inline void Uniform3f::setFromOtherImpl(glm::vec3 const& other) {
+		assert(this->program.has_value() && this->program.value().isBound());
+
+		glUniform3fv(this->location, 1, &other[0]);
 	}
 
 	using Uniform4fv = UniformBase<std::vector<glm::vec4>>;

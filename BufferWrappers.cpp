@@ -1,3 +1,7 @@
+#include "BufferWrappers.h"
+#include "BufferWrappers.h"
+#include "BufferWrappers.h"
+#include "BufferWrappers.h"
 // render - A C++ OpenGL library
 // Copyright (C) 2022  Intrets
 //
@@ -451,6 +455,60 @@ namespace render
 		return res;
 	}
 
+	bwo::Texture2D bwo::Texture2DHelper::makeVec2Buffer(glm::ivec2 size, bool filtering) {
+		GLenum filterMode = filtering ? GL_LINEAR : GL_NEAREST;
+		Texture2D res{
+			size,
+			0,
+			GL_RG32F,
+			filterMode,
+			filterMode,
+			GL_REPEAT,
+			GL_REPEAT,
+			0,
+			GL_RG,
+			GL_FLOAT,
+			(void*)0
+		};
+		return res;
+	}
+
+	bwo::Texture2D bwo::Texture2DHelper::makeVec3Buffer(glm::ivec2 size, bool filtering) {
+		GLenum filterMode = filtering ? GL_LINEAR : GL_NEAREST;
+		Texture2D res{
+			size,
+			0,
+			GL_RGB32F,
+			filterMode,
+			filterMode,
+			GL_REPEAT,
+			GL_REPEAT,
+			0,
+			GL_RGB,
+			GL_FLOAT,
+			(void*)0
+		};
+		return res;
+	}
+
+	bwo::Texture2D bwo::Texture2DHelper::makeVec4Buffer(glm::ivec2 size, bool filtering) {
+		GLenum filterMode = filtering ? GL_LINEAR : GL_NEAREST;
+		Texture2D res{
+			size,
+			0,
+			GL_RGBA32F,
+			filterMode,
+			filterMode,
+			GL_REPEAT,
+			GL_REPEAT,
+			0,
+			GL_RGBA,
+			GL_FLOAT,
+			(void*)0
+		};
+		return res;
+	}
+
 	bwo::Texture2D bwo::Texture2DHelper::makeNoFiltering(glm::ivec2 size) {
 		Texture2D res{
 			size,
@@ -463,6 +521,23 @@ namespace render
 			0,
 			GL_RGBA,
 			GL_UNSIGNED_BYTE,
+			(void*)0
+		};
+		return res;
+	}
+
+	bwo::Texture2D bwo::Texture2DHelper::makeAccumulateBuffer(glm::ivec2 size) {
+		Texture2D res{
+			size,
+			0,
+			GL_RGBA32F,
+			GL_LINEAR,
+			GL_LINEAR,
+			GL_CLAMP,
+			GL_CLAMP,
+			0,
+			GL_RGB,
+			GL_FLOAT,
 			(void*)0
 		};
 		return res;
