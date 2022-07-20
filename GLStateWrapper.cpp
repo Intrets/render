@@ -33,6 +33,8 @@ namespace ogs
 	}
 
 	void State::setConfiguration(Configuration const& config) {
+		this->setDepthMask(config.depthMask);
+
 		this->setBlend(config.blend);
 		if (config.blend == BLEND::ENABLED) {
 			this->setBlendFunc(config.blendFunc);
@@ -150,6 +152,23 @@ namespace ogs
 		}
 	}
 
+	void State::setDepthMask(DEPTH_MASK b) {
+		if (this->configuration.depthMask != b) {
+			this->configuration.depthMask = b;
+			switch (b) {
+				case DEPTH_MASK::FALSE:
+					glDepthMask(GL_FALSE);
+					break;
+				case DEPTH_MASK::TRUE:
+					glDepthMask(GL_TRUE);
+					break;
+				default:
+					assert(0);
+					break;
+			}
+		}
+	}
+
 	void State::setViewport(glm::ivec4 p) {
 		if (this->viewport != p) {
 			this->viewport = p;
@@ -225,154 +244,170 @@ namespace ogs
 
 	Configuration TextConfiguration() {
 		return {
-			BLEND::ENABLED,
-			BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
-			DEPTH_TEST::ENABLED,
-			DEPTH_FUNC::LESS,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::ENABLED,
+			.blendFunc = BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
+			.depthTest = DEPTH_TEST::ENABLED,
+			.depthFunc = DEPTH_FUNC::LESS,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration UIBackground() {
 		return {
-			BLEND::DISABLED,
-			BLEND_FUNC::UNSET,
-			DEPTH_TEST::ENABLED,
-			DEPTH_FUNC::LESS,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::DISABLED,
+			.blendFunc = BLEND_FUNC::UNSET,
+			.depthTest = DEPTH_TEST::ENABLED,
+			.depthFunc = DEPTH_FUNC::LESS,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration FontAtlasConfiguration() {
 		return {
-			BLEND::DISABLED,
-			BLEND_FUNC::UNSET,
-			DEPTH_TEST::DISABLED,
-			DEPTH_FUNC::UNSET,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::DISABLED,
+			.blendFunc = BLEND_FUNC::UNSET,
+			.depthTest = DEPTH_TEST::DISABLED,
+			.depthFunc = DEPTH_FUNC::UNSET,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration WorldTileConfiguration() {
 		return {
-			BLEND::DISABLED,
-			BLEND_FUNC::UNSET,
-			DEPTH_TEST::DISABLED,
-			DEPTH_FUNC::UNSET,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::DISABLED,
+			.blendFunc = BLEND_FUNC::UNSET,
+			.depthTest = DEPTH_TEST::DISABLED,
+			.depthFunc = DEPTH_FUNC::UNSET,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration BlockIDConfiguration() {
 		return {
-			BLEND::DISABLED,
-			BLEND_FUNC::UNSET,
-			DEPTH_TEST::DISABLED,
-			DEPTH_FUNC::UNSET,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::DISABLED,
+			.blendFunc = BLEND_FUNC::UNSET,
+			.depthTest = DEPTH_TEST::DISABLED,
+			.depthFunc = DEPTH_FUNC::UNSET,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration DebugPointConfiguration() {
 		return {
-			BLEND::DISABLED,
-			BLEND_FUNC::UNSET,
-			DEPTH_TEST::DISABLED,
-			DEPTH_FUNC::UNSET,
-			POLYGON_MODE::POINT,
-			10.0f,
+			.blend = BLEND::DISABLED,
+			.blendFunc = BLEND_FUNC::UNSET,
+			.depthTest = DEPTH_TEST::DISABLED,
+			.depthFunc = DEPTH_FUNC::UNSET,
+			.polygonMode = POLYGON_MODE::POINT,
+			.pointSize = 10.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration DebugLineConfiguration() {
 		return {
-			BLEND::DISABLED,
-			BLEND_FUNC::UNSET,
-			DEPTH_TEST::DISABLED,
-			DEPTH_FUNC::UNSET,
-			POLYGON_MODE::LINE,
-			0.0f,
+			.blend = BLEND::DISABLED,
+			.blendFunc = BLEND_FUNC::UNSET,
+			.depthTest = DEPTH_TEST::DISABLED,
+			.depthFunc = DEPTH_FUNC::UNSET,
+			.polygonMode = POLYGON_MODE::LINE,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration NinesConfiguration() {
 		return {
-			BLEND::ENABLED,
-			BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
-			DEPTH_TEST::ENABLED,
-			DEPTH_FUNC::LEQUAL,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::ENABLED,
+			.blendFunc = BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
+			.depthTest = DEPTH_TEST::ENABLED,
+			.depthFunc = DEPTH_FUNC::LEQUAL,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
+		};
+	}
+
+	Configuration ParticleConfiguration() {
+		return {
+			.blend = BLEND::ENABLED,
+			.blendFunc = BLEND_FUNC::SRC_ONE__ONE_MINUS_SRC_ALPHA,
+			.depthTest = DEPTH_TEST::ENABLED,
+			.depthFunc = DEPTH_FUNC::LEQUAL,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::FALSE
 		};
 	}
 
 	Configuration DefaultConfiguration() {
 		return {
-			BLEND::ENABLED,
-			BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
-			DEPTH_TEST::DISABLED,
-			DEPTH_FUNC::UNSET,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::ENABLED,
+			.blendFunc = BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
+			.depthTest = DEPTH_TEST::DISABLED,
+			.depthFunc = DEPTH_FUNC::UNSET,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration HighlightConfiguration() {
 		return {
-			BLEND::ENABLED,
-			BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
-			DEPTH_TEST::DISABLED,
-			DEPTH_FUNC::UNSET,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::ENABLED,
+			.blendFunc = BLEND_FUNC::SRC_ALPHA__ONE_MINUS_SRC_ALPHA,
+			.depthTest = DEPTH_TEST::DISABLED,
+			.depthFunc = DEPTH_FUNC::UNSET,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration GeneralConfiguration() {
 		return {
-			BLEND::DISABLED,
-			BLEND_FUNC::UNSET,
-			DEPTH_TEST::ENABLED,
-			DEPTH_FUNC::LESS,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::DISABLED,
+			.blendFunc = BLEND_FUNC::UNSET,
+			.depthTest = DEPTH_TEST::ENABLED,
+			.depthFunc = DEPTH_FUNC::LESS,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration ShadowMapConfiguration() {
 		return {
-			BLEND::DISABLED,
-			BLEND_FUNC::UNSET,
-			DEPTH_TEST::ENABLED,
-			DEPTH_FUNC::LESS,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::DISABLED,
+			.blendFunc = BLEND_FUNC::UNSET,
+			.depthTest = DEPTH_TEST::ENABLED,
+			.depthFunc = DEPTH_FUNC::LESS,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
 	}
 
 	Configuration BlitConfiguration() {
 		return {
-			BLEND::DISABLED,
-			BLEND_FUNC::UNSET,
-			DEPTH_TEST::DISABLED,
-			DEPTH_FUNC::UNSET,
-			POLYGON_MODE::FILL,
-			0.0f,
+			.blend = BLEND::DISABLED,
+			.blendFunc = BLEND_FUNC::UNSET,
+			.depthTest = DEPTH_TEST::DISABLED,
+			.depthFunc = DEPTH_FUNC::UNSET,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::TRUE,
 		};
-	}
-
-	Configuration::Configuration(BLEND blend_, BLEND_FUNC blendFunc_, DEPTH_TEST depthTest_, DEPTH_FUNC depthFunc_, POLYGON_MODE polygonMode_, float pointSize_) :
-		blend(blend_),
-		blendFunc(blendFunc_),
-		depthTest(depthTest_),
-		depthFunc(depthFunc_),
-		polygonMode(polygonMode_),
-		pointSize(pointSize_) {
 	}
 
 	std::string ProgramRegistry::listAll() {
