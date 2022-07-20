@@ -28,6 +28,14 @@
 #include <optional>
 #include <unordered_map>
 
+enum class DEPTH_MASK
+{
+	UNSET,
+	FALSE,
+	TRUE,
+	MAX,
+};
+
 enum class BLEND
 {
 	UNSET,
@@ -81,29 +89,15 @@ namespace ogs
 {
 	class State;
 
-	class Configuration
+	struct Configuration
 	{
-	public:
 		BLEND blend = BLEND::UNSET;
 		BLEND_FUNC blendFunc = BLEND_FUNC::UNSET;
 		DEPTH_TEST depthTest = DEPTH_TEST::UNSET;
 		DEPTH_FUNC depthFunc = DEPTH_FUNC::UNSET;
 		POLYGON_MODE polygonMode = POLYGON_MODE::UNSET;
 		float pointSize = 0.0f;
-
-		Configuration(
-			BLEND blend,
-			BLEND_FUNC blendFunc,
-			DEPTH_TEST depthTest,
-			DEPTH_FUNC depthFunc,
-			POLYGON_MODE polygonMode,
-			float pointSize
-		);
-
-	private:
-		Configuration() = default;
-
-		friend class State;
+		DEPTH_MASK depthMask = DEPTH_MASK::UNSET;
 	};
 
 	Configuration TextConfiguration();
@@ -119,6 +113,7 @@ namespace ogs
 	Configuration ShadowMapConfiguration();
 	Configuration BlitConfiguration();
 	Configuration NinesConfiguration();
+	Configuration ParticleConfiguration();
 
 	class ProgramRegistry
 	{
@@ -165,6 +160,7 @@ namespace ogs
 		void setDepthTest(DEPTH_TEST test);
 		void setDepthFunc(DEPTH_FUNC func);
 		void setPolygonMode(POLYGON_MODE mode);
+		void setDepthMask(DEPTH_MASK b);
 
 		void setViewport(glm::ivec4 p);
 		void setFrameBuffer(GLuint frameBuffer);
