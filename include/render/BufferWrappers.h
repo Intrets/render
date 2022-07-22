@@ -89,7 +89,7 @@ namespace render
 			glm::ivec2 size;
 
 			Texture2D();
-			Texture2D(GLuint handle);
+			explicit Texture2D(GLuint handle);
 			Texture2D(
 				glm::ivec2 size,
 				GLint level,
@@ -115,10 +115,11 @@ namespace render
 			Texture2D makeNoFiltering(glm::ivec2 size);
 			Texture2D makeAccumulateBuffer(glm::ivec2 size);
 			Texture2D makeLinearFiltering(glm::ivec2 size);
-			Texture2D makeFloatBuffer(glm::ivec2 size, bool filtering = false);
+			Texture2D makeFloatBuffer(glm::ivec2 size, bool filtering = false, bool mip = false);
 			Texture2D makeVec2Buffer(glm::ivec2 size, bool filtering = false);
 			Texture2D makeVec3Buffer(glm::ivec2 size, bool filtering = false);
 			Texture2D makeVec4Buffer(glm::ivec2 size, bool filtering = false);
+			Texture2D makeHDRBuffer(glm::ivec2 size);
 		};
 
 		namespace Texture2DArrayHelper

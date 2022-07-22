@@ -134,7 +134,7 @@ namespace render
 		gli::texture Texture = gli::load(Filename);
 		if (Texture.empty()) {
 			logger->acquire()->log(Logger::Level::error, "Failed to load file {}\n", Filename);
-			return 0;
+			return {};
 		}
 
 		return load2DTexture(Texture);
@@ -149,7 +149,7 @@ namespace render
 
 		if (Texture.empty()) {
 			logger->acquire()->log(Logger::Level::error, "Failed to load texture from raw data of size {}\n", size);
-			return 0;
+			return {};
 		}
 
 		return load2DTexture(Texture);
