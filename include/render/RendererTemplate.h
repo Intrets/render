@@ -532,6 +532,7 @@ namespace render
 		POINT = 1 << 1,
 		LINE = 1 << 2,
 		LINESTRIP = 1 << 3,
+		TRIANGLESTRIP = 1 << 4,
 	};
 
 	static constexpr auto getRenderMode(int mode) {
@@ -548,6 +549,9 @@ namespace render
 			case render::LINESTRIP:
 				return GL_LINE_STRIP;
 				break;
+			case render::TRIANGLESTRIP:
+				return GL_TRIANGLE_STRIP;
+				break;
 			default:
 				assert(0);
 				return GL_TRIANGLES;
@@ -555,7 +559,7 @@ namespace render
 		}
 	}
 
-	static constexpr auto all_render_modes = te::value_list<render::TRIANGLE, render::POINT, render::LINE, render::LINESTRIP>;
+	static constexpr auto all_render_modes = te::value_list<render::TRIANGLE, render::POINT, render::LINE, render::LINESTRIP, render::TRIANGLESTRIP>;
 
 	template<class Uniforms, int mode, class... Buffers>
 	struct Renderer2
