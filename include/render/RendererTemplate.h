@@ -481,9 +481,9 @@ namespace render
 
 					buffer.bind(GL_ARRAY_BUFFER);
 
-					logger->acquire()->log(Logger::Level::info, "new attribute group\n");
+					logger->logInfo("new attribute group\n");
 					te::for_each_type([&]<class T>(te::Type_t<T>) {
-						logger->acquire()->log(Logger::Level::info,
+						logger->logInfo(
 							"new attribute {}, size {}, stride {}, offset {}\n", state.index, sizeof(T), state.stride, state.offset);
 
 						applyVertexInfo<T>(state);
@@ -721,7 +721,7 @@ namespace render
 						instanceCount = bufferSize;
 					}
 					else if (instanceCount.value() != bufferSize) {
-						logger->acquire()->log(Logger::Level::error, "Buffer size mis-match when rendering program {}. Sizes {} and {}. Continuing with smallest.\n", this->program.getDescription(), instanceCount.value(), bufferSize);
+						logger->logError("Buffer size mis-match when rendering program {}. Sizes {} and {}. Continuing with smallest.\n", this->program.getDescription(), instanceCount.value(), bufferSize);
 
 						instanceCount = std::min(instanceCount.value(), bufferSize);
 					}
@@ -729,7 +729,7 @@ namespace render
 				}, vao.buffers);
 
 			if (!maybeElementCount.has_value()) {
-				logger->acquire()->log(Logger::Level::error, "Missing element buffer to determine amount of elements to draw in program {}. Skipping render.\n", this->program.getDescription());
+				logger->logError("Missing element buffer to determine amount of elements to draw in program {}. Skipping render.\n", this->program.getDescription());
 				return;
 			}
 			elementCount = maybeElementCount.value();
@@ -770,13 +770,13 @@ namespace render
 					target.draw(
 						viewport,
 						[elementCount, instanceCount = instanceCount.value()]() {
-						glDrawArraysInstanced(
-							getRenderMode(m),
-							0,
-							static_cast<GLsizei>(elementCount),
-							static_cast<GLsizei>(instanceCount)
-						);
-					}
+							glDrawArraysInstanced(
+								getRenderMode(m),
+								0,
+								static_cast<GLsizei>(elementCount),
+								static_cast<GLsizei>(instanceCount)
+							);
+						}
 					);
 				}
 			}, all_render_modes);
