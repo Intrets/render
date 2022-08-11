@@ -246,10 +246,13 @@ namespace render
 		glGenFramebuffers(1, &this->ID);
 	}
 
-	bwo::FrameBuffer::FrameBuffer(ogs::State& openglState_, int x, int y) : openglState(openglState_) {
-		this->ID = 0;
-		this->size.x = x;
-		this->size.y = y;
+	bwo::FrameBuffer::FrameBuffer(ogs::State& openglState_, glm::ivec2 size_) :
+		ID(0),
+		openglState(openglState_),
+		size(size_) {
+	}
+
+	bwo::FrameBuffer::FrameBuffer(ogs::State& openglState_, int x, int y) : FrameBuffer(openglState_, glm::ivec2(x, y)) {
 	}
 
 	inline bwo::FrameBuffer::FrameBuffer(FrameBuffer&& other) : openglState(other.openglState) {
