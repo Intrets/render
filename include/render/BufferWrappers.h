@@ -137,6 +137,7 @@ namespace render
 			glm::ivec2 size{};
 
 			FrameBuffer(ogs::State& openglState);
+			FrameBuffer(ogs::State& openglState, glm::ivec2 size_);
 			FrameBuffer(ogs::State& openglState, int x, int y);
 			FrameBuffer(FrameBuffer&& other);
 			FrameBuffer& operator=(FrameBuffer&& other);
