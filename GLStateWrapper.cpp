@@ -1,3 +1,5 @@
+#include "GLStateWrapper.h"
+#include "GLStateWrapper.h"
 // render - A C++ OpenGL library
 // Copyright (C) 2022  Intrets
 //
@@ -81,6 +83,9 @@ namespace ogs
 					break;
 				case BLEND_FUNC::ZERO__ONE:
 					glBlendFunc(GL_ZERO, GL_ONE);
+					break;
+				case BLEND_FUNC::ONE__ONE:
+					glBlendFunc(GL_ONE, GL_ONE);
 					break;
 				default:
 					assert(0);
@@ -188,6 +193,10 @@ namespace ogs
 
 			glBindFramebuffer(GL_FRAMEBUFFER, this->frameBuffer.value());
 		}
+	}
+
+	void State::setFrameBuffer(render::bwo::FrameBuffer const& frameBuffer) {
+		this->setFrameBuffer(frameBuffer.ID);
 	}
 
 	void State::setVAO(GLint id) {
@@ -350,6 +359,18 @@ namespace ogs
 		};
 	}
 
+	Configuration BadBloomConfiguration() {
+		return {
+			.blend = BLEND::ENABLED,
+			.blendFunc = BLEND_FUNC::ONE__ONE,
+			.depthTest = DEPTH_TEST::DISABLED,
+			.depthFunc = DEPTH_FUNC::UNSET,
+			.polygonMode = POLYGON_MODE::FILL,
+			.pointSize = 0.0f,
+			.depthMask = DEPTH_MASK::FALSE,
+		};
+	}
+
 	Configuration DefaultConfiguration() {
 		return {
 			.blend = BLEND::ENABLED,
@@ -406,7 +427,7 @@ namespace ogs
 			.depthFunc = DEPTH_FUNC::UNSET,
 			.polygonMode = POLYGON_MODE::FILL,
 			.pointSize = 0.0f,
-			.depthMask = DEPTH_MASK::TRUE,
+			.depthMask = DEPTH_MASK::FALSE,
 		};
 	}
 

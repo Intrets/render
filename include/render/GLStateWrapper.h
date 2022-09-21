@@ -51,6 +51,7 @@ enum class BLEND_FUNC
 	SRC_ONE__ONE_MINUS_SRC_ALPHA,
 	ONE__ZERO,
 	ZERO__ONE,
+	ONE__ONE,
 	MAX,
 };
 
@@ -83,6 +84,7 @@ enum class POLYGON_MODE
 namespace render::bwo
 {
 	class Program;
+	class FrameBuffer;
 }
 
 namespace ogs
@@ -114,6 +116,7 @@ namespace ogs
 	Configuration BlitConfiguration();
 	Configuration NinesConfiguration();
 	Configuration ParticleConfiguration();
+	Configuration BadBloomConfiguration();
 
 	class ProgramRegistry
 	{
@@ -164,6 +167,7 @@ namespace ogs
 
 		void setViewport(glm::ivec4 p);
 		void setFrameBuffer(GLuint frameBuffer);
+		void setFrameBuffer(render::bwo::FrameBuffer const& frameBuffer);
 		void setVAO(GLint id);
 		void setProgram(GLint id);
 

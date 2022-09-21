@@ -437,14 +437,15 @@ namespace render
 		return res;
 	}
 
-	bwo::Texture2D bwo::Texture2DHelper::makeFloatBuffer(glm::ivec2 size, bool filtering) {
-		GLenum filterMode = filtering ? GL_LINEAR : GL_NEAREST;
+	bwo::Texture2D bwo::Texture2DHelper::makeFloatBuffer(glm::ivec2 size, bool filtering, bool mip) {
+		GLenum filterModeMag = filtering ? GL_LINEAR : GL_NEAREST;
+		GLenum filterModeMin = filtering ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST;
 		Texture2D res{
 			size,
 			0,
 			GL_R32F,
-			filterMode,
-			filterMode,
+			filterModeMag,
+			filterModeMin,
 			GL_REPEAT,
 			GL_REPEAT,
 			0,
@@ -507,6 +508,22 @@ namespace render
 			(void*)0
 		};
 		return res;
+	}
+
+	bwo::Texture2D bwo::Texture2DHelper::makeHDRBuffer(glm::ivec2 size) {
+		return Texture2D(
+			size,
+			0,
+			GL_RGBA16F,
+			GL_LINEAR,
+			GL_LINEAR,
+			GL_REPEAT,
+			GL_REPEAT,
+			0,
+			GL_RGBA,
+			GL_FLOAT,
+			(void*)0
+		);
 	}
 
 	bwo::Texture2D bwo::Texture2DHelper::makeNoFiltering(glm::ivec2 size) {
