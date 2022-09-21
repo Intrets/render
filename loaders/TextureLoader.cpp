@@ -133,7 +133,7 @@ namespace render
 	bwo::Texture2D load2DTexture(std::string const Filename) {
 		gli::texture Texture = gli::load(Filename);
 		if (Texture.empty()) {
-			logger->acquire()->log(Logger::Level::error, "Failed to load file {}\n", Filename);
+			logger->logError("Failed to load file {}\n", Filename);
 			return 0;
 		}
 
@@ -148,7 +148,7 @@ namespace render
 		gli::texture Texture = gli::load_dds(data, size);
 
 		if (Texture.empty()) {
-			logger->acquire()->log(Logger::Level::error, "Failed to load texture from raw data of size {}\n", size);
+			logger->logError("Failed to load texture from raw data of size {}\n", size);
 			return 0;
 		}
 

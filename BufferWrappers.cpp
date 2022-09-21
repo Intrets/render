@@ -48,7 +48,7 @@ namespace render
 		auto const& vertBuffer = maybeVertBuffer.value();
 
 		this->openglState.programRegistry.deleteProgram(*this);
-		logger->acquire()->log(Logger::Level::status, "Refreshing shaders of Program {}\n", this->description);
+		logger->logStatus("Refreshing shaders of Program {}\n", this->description);
 
 		this->ID = LoadShaders(
 			vertBuffer->getData<char>(),
@@ -82,7 +82,7 @@ namespace render
 		: openglState(openglState_) {
 
 		this->description = description_;
-		logger->acquire()->log(Logger::Level::status, "Creating Program {}\n", this->description);
+		logger->logStatus("Creating Program {}\n", this->description);
 		this->ID = LoadShaders(vert_raw, static_cast<GLint>(vert_size), frag_raw, static_cast<GLint>(frag_size));
 		this->openglState.programRegistry.registerProgram(*this);
 	}
@@ -99,7 +99,7 @@ namespace render
 		this->getFragmentBuffer = fragmentGenerator;
 
 		this->description = description_;
-		logger->acquire()->log(Logger::Level::status, "Creating Program {}\n", this->description);
+		logger->logStatus("Creating Program {}\n", this->description);
 
 		[[maybe_unused]]
 		bool b = this->refreshShaders();
