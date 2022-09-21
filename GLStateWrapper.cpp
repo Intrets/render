@@ -195,8 +195,8 @@ namespace ogs
 		}
 	}
 
-	void State::setFrameBuffer(render::bwo::FrameBuffer const& frameBuffer) {
-		this->setFrameBuffer(frameBuffer.ID);
+	void State::setFrameBuffer(render::bwo::FrameBuffer const& frameBuffer_) {
+		this->setFrameBuffer(frameBuffer_.ID);
 	}
 
 	void State::setVAO(GLint id) {
