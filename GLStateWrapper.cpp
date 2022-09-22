@@ -246,9 +246,15 @@ namespace ogs
 		this->configuration.polygonMode = POLYGON_MODE::UNSET;
 
 		this->viewport = std::nullopt;
+
 		this->frameBuffer = std::nullopt;
+		this->setFrameBuffer(0);
+
 		this->vao = std::nullopt;
+		this->setVAO(0);
+
 		this->program = std::nullopt;
+		this->setProgram(0);
 	}
 
 	Configuration TextConfiguration() {
