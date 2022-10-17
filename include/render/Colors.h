@@ -130,6 +130,61 @@ namespace render
 		converter(rgb(216, 191, 216)),
 	};
 
+	static constexpr std::array<Color, 24> twocolors{
+		converter(rgb(192, 50, 50)),
+		converter(rgb(192, 86, 50)),
+		converter(rgb(192, 121, 50)),
+		converter(rgb(192, 156, 50)),
+		converter(rgb(192, 192, 50)),
+		converter(rgb(156, 192, 50)),
+		converter(rgb(121, 192, 50)),
+		converter(rgb(86, 192, 50)),
+		converter(rgb(50, 192, 50)),
+		converter(rgb(50, 192, 86)),
+		converter(rgb(50, 192, 121)),
+		converter(rgb(50, 192, 156)),
+		converter(rgb(50, 192, 192)),
+		converter(rgb(50, 156, 192)),
+		converter(rgb(50, 121, 192)),
+		converter(rgb(50, 86, 192)),
+		converter(rgb(50, 50, 192)),
+		converter(rgb(86, 50, 192)),
+		converter(rgb(121, 50, 192)),
+		converter(rgb(156, 50, 192)),
+		converter(rgb(192, 50, 192)),
+		converter(rgb(192, 50, 156)),
+		converter(rgb(192, 50, 121)),
+		converter(rgb(192, 50, 86)),
+	};
+
+	struct twocolor
+	{
+		static twocolor red() {
+			return { 0 };
+		}
+
+		static twocolor green() {
+			return { 8 };
+		}
+
+		static twocolor blue() {
+			return { 16 };
+		}
+
+		size_t index = 0;
+
+		twocolor operator+(int i) {
+			return { (this->index + i) % twocolors.size() };
+		}
+
+		twocolor operator-(int i) {
+			return { (this->index - i) % twocolors.size() };
+		}
+
+		operator Color() {
+			return twocolors[this->index];
+		}
+	};
 
 	template<class T>
 	Color uniqueColor(T val) {
