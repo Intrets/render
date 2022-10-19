@@ -69,6 +69,10 @@ namespace render
 		glTexParameteri(Target, GL_TEXTURE_SWIZZLE_G, Format.Swizzles[1]);
 		glTexParameteri(Target, GL_TEXTURE_SWIZZLE_B, Format.Swizzles[2]);
 		glTexParameteri(Target, GL_TEXTURE_SWIZZLE_A, Format.Swizzles[3]);
+		glTexParameteri(Target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(Target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(Target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(Target, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 		glm::tvec3<GLsizei> const Extent1(Texture.extent());
 		GLsizei const FaceTotal = static_cast<GLsizei>(Texture.layers() * Texture.faces());
@@ -124,10 +128,11 @@ namespace render
 				}
 			}
 		}
+
 		bwo::Texture2D res{ TextureName };
 		res.size = size;
-		return res;
 
+		return res;
 	}
 
 	bwo::Texture2D load2DTexture(std::string const Filename) {
