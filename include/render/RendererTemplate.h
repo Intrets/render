@@ -122,6 +122,14 @@ namespace render
 		glUniform3fv(this->location, 1, &other[0]);
 	}
 
+	using Uniform4f = UniformBase<glm::vec4>;
+	template<>
+	inline void Uniform4f::setFromOtherImpl(glm::vec4 const& other) {
+		assert(this->program.has_value() && this->program.value().isBound());
+
+		glUniform4fv(this->location, 1, &other[0]);
+	}
+
 	using Uniform3fv = UniformBase<std::vector<glm::vec3>>;
 	template<>
 	inline void Uniform3fv::setFromOtherImpl(std::vector<glm::vec3> const& other) {
