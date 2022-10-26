@@ -44,6 +44,20 @@ namespace render
 			DYNAMIC_COPY = GL_DYNAMIC_COPY,
 		};
 
+		class BufferTexture
+		{
+		public:
+			GLuint ID;
+
+			BufferTexture();
+			~BufferTexture();
+
+			BufferTexture(BufferTexture&& other);
+			BufferTexture& operator=(BufferTexture&& other);
+
+			NO_COPY(BufferTexture);
+		};
+
 		class Texture2DArray
 		{
 		public:

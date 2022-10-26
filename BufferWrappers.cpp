@@ -639,6 +639,31 @@ namespace render
 				this->openglState.setProgram(0);
 			}
 		}
+
+		BufferTexture::BufferTexture() {
+			glGenTextures(1, &this->ID);
+		}
+
+		BufferTexture::~BufferTexture() {
+			glDeleteTextures(1, &this->ID);
+		}
+
+		BufferTexture::BufferTexture(BufferTexture&& other) {
+			this->ID = other.ID;
+			other.ID = 0;
+		}
+
+		BufferTexture& BufferTexture::operator=(BufferTexture&& other) {
+			if (this == &other) {
+				return *this;
+			}
+
+			glDeleteTextures(1, &this->ID);
+			this->ID = other.ID;
+			other.ID = 0;
+
+			return *this;
+		}
 	}
 }
 

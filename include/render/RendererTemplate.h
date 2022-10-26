@@ -158,15 +158,30 @@ namespace render
 
 	namespace description
 	{
+		struct BufferTexture;
 		struct Texture2D;
 		struct Texture2DArray;
 		struct Texture3D;
 		struct TexturesBound;
 	}
 
+	using UniformBufferTexture = UniformBase<GLuint, description::BufferTexture>;
 	using UniformTexture2D = UniformBase<GLuint, description::Texture2D>;
 	using UniformTexture2DArray = UniformBase<GLuint, description::Texture2DArray>;
 	using UniformTexture3D = UniformBase<GLuint, description::Texture3D>;
+
+	template<>
+	inline void UniformBufferTexture::setFromOtherImpl(GLuint const& other) {
+		assert(this->program.has_value() && this->program.value().isBound());
+
+		auto unit = *LazyGlobal<int, description::TexturesBound>;
+
+		glActiveTexture(GL_TEXTURE0 + *unit);
+		glBindTexture(GL_TEXTURE_BUFFER, other);
+		glUniform1i(this->location, *unit);
+
+		(*unit)++;
+	}
 
 	template<>
 	inline void UniformTexture2D::setFromOtherImpl(GLuint const& other) {
@@ -263,8 +278,8 @@ namespace render
 			glDeleteBuffers(1, &this->ID);
 		}
 
-		void set(std::vector<T> const& data, BufferUsageHint hint) {
-			this->setRaw(sizeof(T) * data.size(), data.data(), hint);
+		void set(std::vector<T> const& data, BufferUsageHint hint, GLenum location = GL_ARRAY_BUFFER) {
+			this->setRaw(sizeof(T) * data.size(), data.data(), hint, location);
 		};
 
 		void bind(GLenum location) {
@@ -272,7 +287,7 @@ namespace render
 			glBindBuffer(location, this->ID);
 		}
 
-		void setRaw(size_t size_, void const* data, BufferUsageHint hint) {
+		void setRaw(size_t size_, void const* data, BufferUsageHint hint, GLenum location = GL_ARRAY_BUFFER) {
 			if (size_ == 0) {
 				this->size = 0;
 				return;
@@ -281,8 +296,8 @@ namespace render
 			assert(this->ID != 0);
 			assert(size_ > 0);
 			this->size = size_ / sizeof(T);
-			glBindBuffer(GL_ARRAY_BUFFER, this->ID);
-			glBufferData(GL_ARRAY_BUFFER, size_, data, convert(hint));
+			glBindBuffer(location, this->ID);
+			glBufferData(location, size_, data, convert(hint));
 		}
 
 		NO_COPY(ArrayBuffer);

@@ -15,6 +15,18 @@ namespace render
 	struct Color
 	{
 		uint32_t c;
+
+		constexpr float redNormalized() const {
+			return (this->c & 0xFF) / 255.0f;
+		}
+
+		constexpr float greenNormalized() const {
+			return ((this->c >> 8) & 0xFF) / 255.0f;
+		}
+
+		constexpr float blueNormalized() const {
+			return ((this->c >> 16) & 0xFF) / 255.0f;
+		}
 	};
 
 	template<class T>
