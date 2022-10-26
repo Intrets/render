@@ -130,6 +130,14 @@ namespace render
 		glUniform4fv(this->location, 1, &other[0]);
 	}
 
+	using Uniform1fv = UniformBase<std::vector<float>>;
+	template<>
+	inline void Uniform1fv::setFromOtherImpl(std::vector<float> const& other) {
+		assert(this->program.has_value() && this->program.value().isBound());
+
+		glUniform1fv(this->location, static_cast<GLsizei>(other.size()), other.data());
+	}
+
 	using Uniform3fv = UniformBase<std::vector<glm::vec3>>;
 	template<>
 	inline void Uniform3fv::setFromOtherImpl(std::vector<glm::vec3> const& other) {
