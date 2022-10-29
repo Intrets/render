@@ -27,6 +27,11 @@ namespace render
 		constexpr float blueNormalized() const {
 			return ((this->c >> 16) & 0xFF) / 255.0f;
 		}
+
+		void setAlpha(float v) {
+			this->c &= 0xFFFFFF;
+			this->c |= (static_cast<uint8_t>(v * 255) << 24);
+		}
 	};
 
 	template<class T>
