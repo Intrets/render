@@ -7,6 +7,7 @@
 #include <concepts>
 #include <bit>
 #include <array>
+#include <cassert>
 
 #include "SRGBConversion.h"
 

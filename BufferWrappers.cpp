@@ -234,8 +234,8 @@ namespace render
 	}
 
 	bwo::FrameBuffer::FrameBuffer(ogs::State& openglState_, glm::ivec2 size_) :
-		ID(0),
 		openglState(openglState_),
+		ID(0),
 		size(size_) {
 	}
 

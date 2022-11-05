@@ -8,7 +8,7 @@
 
 namespace render
 {
-	render::ScopedVAO::ScopedVAO(ogs::State& openglState_, GLuint id, bool resetOnDestruct_) : openglState(openglState_), resetOnDestruct(resetOnDestruct_) {
+	render::ScopedVAO::ScopedVAO(ogs::State& openglState_, GLuint id, bool resetOnDestruct_) : resetOnDestruct(resetOnDestruct_), openglState(openglState_) {
 		this->openglState.setVAO(id);
 	}
 
