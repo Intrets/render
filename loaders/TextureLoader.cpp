@@ -38,13 +38,13 @@
 #pragma clang diagnostic ignored "-Wdeprecated-anon-enum-enum-conversion"
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #pragma clang diagnostic ignored "-Wdeprecated-volatile"
+#pragma clang diagnostic ignored "-Wunused-variable"
 #elif defined(COMPILER_MSVC)
 #pragma warning(push,0)
 #pragma warning(disable: 4201; disable: 4324; disable: 4310)
 #endif
 
 #include <gli/gli.hpp>
-
 
 #if defined(COMPILER_CLANGCL) || defined(COMPILER_CLANG)
 #pragma clang diagnostic pop
