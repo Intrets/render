@@ -106,8 +106,8 @@ namespace render
 	static constexpr Color shadow_color = converter(rgba(0, 0, 0, 150));
 	static constexpr Color transparent_dark = converter(rgba(0, 0, 0, 230));
 
-	static constexpr Color dial_border_gray = converter(rgb(188,188,188));
-	static constexpr Color highlight_color = dial_border_gray;
+	static constexpr Color dial_border_gray = converter(rgb(188, 188, 188));
+	static constexpr Color highlight_color = rgb(255, 255, 255);
 
 	static constexpr Color gray_translucent = converter(rgba(0, 0, 0, 100));
 
