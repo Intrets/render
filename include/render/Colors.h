@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include <string>
-#include <concepts>
-#include <bit>
 #include <array>
+#include <bit>
 #include <cassert>
+#include <concepts>
+#include <string>
 
 #include "SRGBConversion.h"
 
@@ -59,7 +59,7 @@ namespace render
 		return std::bit_cast<Color>(h);
 	}
 
-	using converterFunctionType = Color(*)(Color);
+	using converterFunctionType = Color (*)(Color);
 	constexpr converterFunctionType converter = toLinear;
 
 	constexpr Color rgb(uint32_t r, uint32_t g, uint32_t b) {
@@ -78,6 +78,7 @@ namespace render
 		return converter(rgba(r, g, b, a));
 	}
 
+	static constexpr Color nothing = { 0x0 };
 	static constexpr Color red = converter({ 0xFF0000FF });
 	static constexpr Color green = converter({ 0xFF00FF00 });
 	static constexpr Color blue = converter({ 0xFFFF0000 });
@@ -86,6 +87,7 @@ namespace render
 	static constexpr Color cyan = converter({ 0xFFFFFF00 });
 	static constexpr Color white = converter({ 0xFFFFFFFF });
 	static constexpr Color dlue = converter({ 0xFF261F00 });
+	static constexpr Color dark_sky = converter({ 0xFFBA9264 });
 	static constexpr Color lighter_dlue = converter({ 0xFF2F2708 });
 	static constexpr Color nice_blue = converter({ 0xFFFFAC00 });
 	static constexpr Color nice_darkblue = converter({ 0xFFFF6900 });
@@ -100,12 +102,14 @@ namespace render
 	static constexpr Color gray_red = converter({ 0xFF404080 });
 	static constexpr Color gray_green = converter({ 0xFF408040 });
 	static constexpr Color gray_blue = converter({ 0xFF804040 });
-	static constexpr Color highlight_color = converter(rgb(100, 255, 255));
+	static constexpr Color selection_color = converter(rgb(100, 255, 255));
 	static constexpr Color shadow_color = converter(rgba(0, 0, 0, 150));
 	static constexpr Color transparent_dark = converter(rgba(0, 0, 0, 230));
 
-	static constexpr Color gray_translucent = converter(rgba(0, 0, 0, 100));
+	static constexpr Color dial_border_gray = converter(rgb(188,188,188));
+	static constexpr Color highlight_color = dial_border_gray;
 
+	static constexpr Color gray_translucent = converter(rgba(0, 0, 0, 100));
 
 	static constexpr std::array<Color, 5> nice_colors = {
 		nice_blue,
@@ -116,34 +120,34 @@ namespace render
 	};
 
 	static constexpr std::array<Color, 30> reds_and_purples = {
-		converter(rgb(205,  92,  92)),
-		converter(rgb(178,  34,  34)),
-		converter(rgb(165,  42,  42)),
+		converter(rgb(205, 92, 92)),
+		converter(rgb(178, 34, 34)),
+		converter(rgb(165, 42, 42)),
 		converter(rgb(233, 150, 122)),
 		converter(rgb(250, 128, 114)),
 		converter(rgb(255, 160, 122)),
-		converter(rgb(255, 127,  80)),
+		converter(rgb(255, 127, 80)),
 		converter(rgb(240, 128, 128)),
-		converter(rgb(255,  99,  71)),
-		converter(rgb(255,  69,   0)),
-		converter(rgb(255,   0,   0)),
+		converter(rgb(255, 99, 71)),
+		converter(rgb(255, 69, 0)),
+		converter(rgb(255, 0, 0)),
 		converter(rgb(255, 105, 180)),
-		converter(rgb(255,  20, 147)),
+		converter(rgb(255, 20, 147)),
 		converter(rgb(255, 192, 203)),
 		converter(rgb(255, 182, 193)),
 		converter(rgb(219, 112, 147)),
-		converter(rgb(176,  48,  96)),
-		converter(rgb(199,  21, 133)),
-		converter(rgb(208,  32, 144)),
-		converter(rgb(255,   0, 255)),
+		converter(rgb(176, 48, 96)),
+		converter(rgb(199, 21, 133)),
+		converter(rgb(208, 32, 144)),
+		converter(rgb(255, 0, 255)),
 		converter(rgb(238, 130, 238)),
 		converter(rgb(221, 160, 221)),
 		converter(rgb(218, 112, 214)),
-		converter(rgb(186,  85, 211)),
-		converter(rgb(153,  50, 204)),
-		converter(rgb(148,   0, 211)),
-		converter(rgb(138,  43, 226)),
-		converter(rgb(160,  32, 240)),
+		converter(rgb(186, 85, 211)),
+		converter(rgb(153, 50, 204)),
+		converter(rgb(148, 0, 211)),
+		converter(rgb(138, 43, 226)),
+		converter(rgb(160, 32, 240)),
 		converter(rgb(147, 112, 219)),
 		converter(rgb(216, 191, 216)),
 	};
