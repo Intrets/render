@@ -3,25 +3,25 @@
 
 #pragma once
 
-#include <vector>
 #include <cassert>
 #include <optional>
+#include <vector>
 
 #include <wrangled_gl/wrangled_gl.h>
 
 #include <tepp/dest.h>
 #include <tepp/enum_bitflags.h>
 
+#include <wglm/mat3x3.hpp>
+#include <wglm/mat4x4.hpp>
 #include <wglm/vec2.hpp>
 #include <wglm/vec3.hpp>
 #include <wglm/vec4.hpp>
-#include <wglm/mat4x4.hpp>
-#include <wglm/mat3x3.hpp>
 
 #include <misc/Logger.h>
 
-#include <mem/LazyGlobal.h>
 #include <mem/Global.h>
+#include <mem/LazyGlobal.h>
 
 #include "BufferWrappers.h"
 #include "Colors.h"
@@ -67,9 +67,11 @@ namespace render
 		static constexpr inline GLint invalid_location = -1;
 		GLint location = invalid_location;
 
-		UniformBase(T val) : storage(std::move(val)) {
+		UniformBase(T val)
+		    : storage(std::move(val)) {
 		}
-		UniformBase(std::string_view name_) : name(name_) {
+		UniformBase(std::string_view name_)
+		    : name(name_) {
 		}
 
 		void init(bwo::Program& program_) {
@@ -77,12 +79,12 @@ namespace render
 			assert(this->location == invalid_location);
 			this->location = glGetUniformLocation(program_.ID, this->name.c_str());
 			this->program = program_;
-			//assert(this->location != invalid_location);
+			// assert(this->location != invalid_location);
 		};
 
 		void setFromOther(UniformBase<T, phantom> const& other) {
-			//assert(this->location != invalid_location);
-			//assert(other.location == invalid_location);
+			// assert(this->location != invalid_location);
+			// assert(other.location == invalid_location);
 			assert(this->program.has_value() && this->program.value().isBound());
 
 			if (other.storage.has_value()) {
@@ -321,12 +323,12 @@ namespace render
 		{
 			static void run(VertexInfoState& state) {
 				glVertexAttribPointer(
-					state.index,
-					static_cast<GLint>(size),
-					GL_FLOAT,
-					GL_FALSE,
-					state.stride,
-					(void*)state.offset
+				    state.index,
+				    static_cast<GLint>(size),
+				    GL_FLOAT,
+				    GL_FALSE,
+				    state.stride,
+				    (void*)state.offset
 				);
 				glVertexAttribDivisor(state.index, state.divisor);
 				glEnableVertexAttribArray(state.index);
@@ -341,11 +343,11 @@ namespace render
 		{
 			static void run(VertexInfoState& state) {
 				glVertexAttribIPointer(
-					state.index,
-					static_cast<GLint>(size),
-					GL_INT,
-					state.stride,
-					(void*)state.offset
+				    state.index,
+				    static_cast<GLint>(size),
+				    GL_INT,
+				    state.stride,
+				    (void*)state.offset
 				);
 				glVertexAttribDivisor(state.index, state.divisor);
 				glEnableVertexAttribArray(state.index);
@@ -362,12 +364,12 @@ namespace render
 				// used as a vec4 in shader, makes no sense to have multiple
 				static_assert(size == 1);
 				glVertexAttribPointer(
-					state.index,
-					static_cast<GLint>(4),
-					GL_UNSIGNED_BYTE,
-					GL_TRUE,
-					state.stride,
-					(void*)state.offset
+				    state.index,
+				    static_cast<GLint>(4),
+				    GL_UNSIGNED_BYTE,
+				    GL_TRUE,
+				    state.stride,
+				    (void*)state.offset
 				);
 				glVertexAttribDivisor(state.index, state.divisor);
 				glEnableVertexAttribArray(state.index);
@@ -384,12 +386,12 @@ namespace render
 				static_assert(size == 1);
 				for (size_t i = 0; i < 3; i++) {
 					glVertexAttribPointer(
-						state.index,
-						static_cast<GLint>(3),
-						GL_FLOAT,
-						GL_FALSE,
-						state.stride,
-						(void*)state.offset
+					    state.index,
+					    static_cast<GLint>(3),
+					    GL_FLOAT,
+					    GL_FALSE,
+					    state.stride,
+					    (void*)state.offset
 					);
 					glVertexAttribDivisor(state.index, state.divisor);
 					glEnableVertexAttribArray(state.index);
@@ -407,12 +409,12 @@ namespace render
 				static_assert(size == 1);
 				for (size_t i = 0; i < 4; i++) {
 					glVertexAttribPointer(
-						state.index,
-						static_cast<GLint>(4),
-						GL_FLOAT,
-						GL_FALSE,
-						state.stride,
-						(void*)state.offset
+					    state.index,
+					    static_cast<GLint>(4),
+					    GL_FLOAT,
+					    GL_FALSE,
+					    state.stride,
+					    (void*)state.offset
 					);
 					glVertexAttribDivisor(state.index, state.divisor);
 					glEnableVertexAttribArray(state.index);
@@ -474,12 +476,12 @@ namespace render
 		GLuint id = 0;
 		ogs::State& openglState;
 
-		[[nodiscard]]
-		ScopedVAO bind(bool resetOnDestruct = false) {
+		[[nodiscard]] ScopedVAO bind(bool resetOnDestruct = false) {
 			return ScopedVAO(openglState, this->id, resetOnDestruct);
 		}
 
-		VAO(ogs::State& openglState_, std::tuple<Buffers...>& buffers) : openglState(openglState_) {
+		VAO(ogs::State& openglState_, std::tuple<Buffers...>& buffers)
+		    : openglState(openglState_) {
 			glGenVertexArrays(1, &this->id);
 
 			auto bind = this->bind();
@@ -489,27 +491,30 @@ namespace render
 			};
 
 			te::tuple_for_each(
-				[&](auto& buffer) {
-					using T = std::remove_cvref_t<decltype(buffer)>;
-					using members = te::get_members_t<typename T::value_type>;
+			    [&](auto& buffer) {
+				    using T = std::remove_cvref_t<decltype(buffer)>;
+				    using members = te::get_members_t<typename T::value_type>;
 
-					state.stride = sizeof(typename T::value_type);
-					state.offset = 0;
-					state.divisor = buffer.divisor;
+				    state.stride = sizeof(typename T::value_type);
+				    state.offset = 0;
+				    state.divisor = buffer.divisor;
 
-					buffer.bind(GL_ARRAY_BUFFER);
+				    buffer.bind(GL_ARRAY_BUFFER);
 
-					logger->logInfo("new attribute group\n");
-					te::for_each_type([&]<class T>(te::Type_t<T>) {
-						logger->logInfo(
-							"new attribute {}, size {}, stride {}, offset {}\n", state.index, sizeof(T), state.stride, state.offset);
+				    logger->logInfo("new attribute group\n");
+				    te::for_each_type([&]<class T>(te::Type_t<T>) {
+					    logger->logInfo(
+					        "new attribute {}, size {}, stride {}, offset {}\n", state.index, sizeof(T), state.stride, state.offset
+					    );
 
-						applyVertexInfo<T>(state);
-					}, te::Type<members>);
+					    applyVertexInfo<T>(state);
+				    },
+				                      te::Type<members>);
 
-					assert(state.stride == state.offset);
-				},
-				buffers);
+				    assert(state.stride == state.offset);
+			    },
+			    buffers
+			);
 		}
 
 		VAO() = delete;
@@ -523,6 +528,14 @@ namespace render
 	struct RenderInfoBase
 	{
 		std::vector<T> data;
+
+		std::span<T> resizeAdditional(int i) {
+			assert(i >= 0);
+			auto current = this->data.size();
+			this->data.resize(this->data.size() + i);
+
+			return std::span(this->data.begin() + current, i);
+		}
 
 		void add(T&& t) {
 			this->data.push_back(std::forward<T>(t));
@@ -587,7 +600,8 @@ namespace render
 			std::tuple<Buffers...> buffers;
 			VAO<Buffers...> vao;
 
-			RendererVAO(ogs::State& openglState) : vao(openglState, this->buffers) {
+			RendererVAO(ogs::State& openglState)
+			    : vao(openglState, this->buffers) {
 			}
 
 			auto bind(bool resetOnDestruct = false) {
@@ -597,13 +611,15 @@ namespace render
 			template<class T>
 			RendererVAO& setBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
 				constexpr auto enumerated_buffer_types = te::enumerate_in_list(
-					te::List<typename Buffers::value_type...>
+				    te::List<typename Buffers::value_type...>
 				);
 
 				constexpr auto same_types = te::filter(
-					[]<template<class...> class L, class S, auto I>(te::Type_t<L<S, te::detail::Value<I>>>) {
-					return te::Value<std::same_as<T, S>>;
-				}, enumerated_buffer_types);
+				    []<template<class...> class L, class S, auto I>(te::Type_t<L<S, te::detail::Value<I>>>) {
+					    return te::Value<std::same_as<T, S>>;
+				    },
+				    enumerated_buffer_types
+				);
 
 				static_assert(Getvalue(te::list_size(same_types)) != 0, "No buffer found with type T");
 				static_assert(Getvalue(te::list_size(same_types)) < 2, "Multiple buffers found with type T");
@@ -629,18 +645,18 @@ namespace render
 			Uniforms uniforms;
 
 			RendererProgram(
-				ogs::State& openglState,
-				bwo::Program::BufferGenerator vertexGenerator,
-				bwo::Program::BufferGenerator fragmentGenerator,
-				std::string_view description
+			    ogs::State& openglState,
+			    bwo::Program::BufferGenerator vertexGenerator,
+			    bwo::Program::BufferGenerator fragmentGenerator,
+			    std::string_view description
 			);
 
 			void render(
-				bwo::FrameBuffer& target,
-				glm::ivec4 viewport,
-				ogs::Configuration const& config,
-				Uniforms const& uniforms_,
-				RendererVAO& vao
+			    bwo::FrameBuffer& target,
+			    glm::ivec4 viewport,
+			    ogs::Configuration const& config,
+			    Uniforms const& uniforms_,
+			    RendererVAO& vao
 			);
 
 			void setUniforms(Uniforms const& uniforms_);
@@ -658,7 +674,6 @@ namespace render
 
 	template<class Uniforms, class... Buffers>
 	using LinePointRenderer = Renderer2<Uniforms, RenderMode::LINESTRIP, Buffers...>;
-
 
 	template<>
 	struct render::RenderInfoTemplate<Vertex2> : RenderInfoBase<Vertex2>
@@ -694,29 +709,30 @@ namespace render
 
 	template<class Uniforms, int mode, class... Buffers>
 	inline Renderer2<Uniforms, mode, Buffers...>::RendererProgram::RendererProgram(
-		ogs::State& openglState,
-		bwo::Program::BufferGenerator vertexGenerator,
-		bwo::Program::BufferGenerator fragmentGenerator,
-		std::string_view description
+	    ogs::State& openglState,
+	    bwo::Program::BufferGenerator vertexGenerator,
+	    bwo::Program::BufferGenerator fragmentGenerator,
+	    std::string_view description
 	)
-		: program(openglState, vertexGenerator, fragmentGenerator, description) {
-
+	    : program(openglState, vertexGenerator, fragmentGenerator, description) {
 		if constexpr (Uniforms::member_count > 0) {
 			te::tuple_for_each(
-				[this](auto& t) {
-					t.init(this->program);
-				}, te::get_tie(this->uniforms));
+			    [this](auto& t) {
+				    t.init(this->program);
+			    },
+			    te::get_tie(this->uniforms)
+			);
 		}
 	}
 
 	template<class Uniforms, int mode, class... Buffers>
 	inline void Renderer2<Uniforms, mode, Buffers...>::RendererProgram::render(
-		bwo::FrameBuffer& target,
-		glm::ivec4 viewport,
-		ogs::Configuration const& config,
-		Uniforms const& uniforms_,
-		RendererVAO& vao) {
-
+	    bwo::FrameBuffer& target,
+	    glm::ivec4 viewport,
+	    ogs::Configuration const& config,
+	    Uniforms const& uniforms_,
+	    RendererVAO& vao
+	) {
 		// Find instance and element count
 		std::optional<int> instanceCount;
 		int elementCount;
@@ -744,7 +760,8 @@ namespace render
 						instanceCount = std::min(instanceCount.value(), bufferSize);
 					}
 				}
-				}, vao.buffers);
+			},
+			                   vao.buffers);
 
 			if (!maybeElementCount.has_value()) {
 				logger->logError("Missing element buffer to determine amount of elements to draw in program {}. Skipping render.\n", this->program.getDescription());
@@ -766,38 +783,42 @@ namespace render
 
 		if (!instanceCount.has_value()) {
 			te::for_each_type(
-				[&]<auto m>(te::Value_t<m>) {
-				if constexpr ((mode & m) == m) {
-					target.draw(
-						viewport,
-						[elementCount]() {
-							glDrawArrays(
-								getRenderMode(m),
-								0,
-								static_cast<GLsizei>(elementCount)
-							);
-						}
-					);
-				}
-			}, all_render_modes);
+			    [&]<auto m>(te::Value_t<m>) {
+				    if constexpr ((mode & m) == m) {
+					    target.draw(
+					        viewport,
+					        [elementCount]() {
+						        glDrawArrays(
+						            getRenderMode(m),
+						            0,
+						            static_cast<GLsizei>(elementCount)
+						        );
+					        }
+					    );
+				    }
+			    },
+			    all_render_modes
+			);
 		}
 		else {
 			te::for_each_type(
-				[&]<auto m>(te::Value_t<m>) {
-				if constexpr ((mode & m) == m) {
-					target.draw(
-						viewport,
-						[elementCount, instanceCount = instanceCount.value()]() {
-							glDrawArraysInstanced(
-								getRenderMode(m),
-								0,
-								static_cast<GLsizei>(elementCount),
-								static_cast<GLsizei>(instanceCount)
-							);
-						}
-					);
-				}
-			}, all_render_modes);
+			    [&]<auto m>(te::Value_t<m>) {
+				    if constexpr ((mode & m) == m) {
+					    target.draw(
+					        viewport,
+					        [elementCount, instanceCount = instanceCount.value()]() {
+						        glDrawArraysInstanced(
+						            getRenderMode(m),
+						            0,
+						            static_cast<GLsizei>(elementCount),
+						            static_cast<GLsizei>(instanceCount)
+						        );
+					        }
+					    );
+				    }
+			    },
+			    all_render_modes
+			);
 		}
 	}
 
@@ -814,10 +835,11 @@ namespace render
 		*unit = 0;
 
 		te::tuple_for_each(
-			[](auto& t) {
-				auto& [target, storage] = t;
-				target.setFromOther(storage);
-			}, zipped
+		    [](auto& t) {
+			    auto& [target, storage] = t;
+			    target.setFromOther(storage);
+		    },
+		    zipped
 		);
 	}
 }
