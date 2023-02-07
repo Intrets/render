@@ -33,6 +33,14 @@ namespace render
 			this->c &= 0xFFFFFF;
 			this->c |= (static_cast<uint8_t>(v * 255) << 24);
 		}
+
+		bool operator==(Color other) {
+			return this->c == other.c;
+		}
+
+		bool operator!=(Color other) {
+			return this->c != other.c;
+		}
 	};
 
 	template<class T>
