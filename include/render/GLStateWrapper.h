@@ -107,10 +107,9 @@ namespace ogs
 
 	class ProgramRegistry
 	{
-	private:
+	public:
 		std::unordered_map<GLint, render::bwo::Program*> programs;
 
-	public:
 		std::string listAll();
 		te::optional_ref<render::bwo::Program> lookup(GLint ID);
 		te::optional_ref<render::bwo::Program> lookup(render::bwo::Program const& program);

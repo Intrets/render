@@ -57,6 +57,22 @@ namespace render
 		uint16_t v;
 	};
 
+	struct UniformState
+	{
+		int textureUnit = 0;
+
+		int getTextureUnit();
+	};
+
+	namespace description
+	{
+		struct BufferTexture;
+		struct Texture2D;
+		struct Texture2DArray;
+		struct Texture3D;
+		struct TexturesBound;
+	}
+
 	template<class T, class phantom = void>
 	struct UniformBase
 	{
@@ -79,20 +95,25 @@ namespace render
 			assert(this->location == invalid_location);
 			this->location = glGetUniformLocation(program_.ID, this->name.c_str());
 			this->program = program_;
-			// assert(this->location != invalid_location);
+			assert(this->location != invalid_location);
 		};
 
-		void setFromOther(UniformBase<T, phantom> const& other) {
-			// assert(this->location != invalid_location);
-			// assert(other.location == invalid_location);
+		void setFromOther(UniformState& uniformState, UniformBase<T, phantom> const& other) {
+			assert(this->location != invalid_location);
+			assert(other.location == invalid_location);
 			assert(this->program.has_value() && this->program.value().isBound());
 
 			if (other.storage.has_value()) {
-				this->setFromOtherImpl(other.storage.value());
+				this->setFromOtherImpl(uniformState, other.storage.value());
+			}
+			else {
+				if constexpr (te::member_of<phantom, te::list_type<description::BufferTexture, description::Texture2D, description::Texture2DArray, description::Texture3D>>) {
+					uniformState.getTextureUnit();
+				}
 			}
 		}
 
-		inline void setFromOtherImpl(T const& other);
+		inline void setFromOtherImpl(UniformState& uniformState, T const& other);
 
 		UniformBase() = delete;
 		~UniformBase() = default;
@@ -102,7 +123,7 @@ namespace render
 
 	using Uniform1f = UniformBase<float>;
 	template<>
-	inline void Uniform1f::setFromOtherImpl(float const& other) {
+	inline void Uniform1f::setFromOtherImpl(UniformState& uniformState, float const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 
 		glUniform1f(this->location, other);
@@ -110,7 +131,7 @@ namespace render
 
 	using Uniform2f = UniformBase<glm::vec2>;
 	template<>
-	inline void Uniform2f::setFromOtherImpl(glm::vec2 const& other) {
+	inline void Uniform2f::setFromOtherImpl(UniformState& uniformState, glm::vec2 const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 
 		glUniform2fv(this->location, 1, &other[0]);
@@ -118,7 +139,7 @@ namespace render
 
 	using Uniform3f = UniformBase<glm::vec3>;
 	template<>
-	inline void Uniform3f::setFromOtherImpl(glm::vec3 const& other) {
+	inline void Uniform3f::setFromOtherImpl(UniformState& uniformState, glm::vec3 const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 
 		glUniform3fv(this->location, 1, &other[0]);
@@ -126,7 +147,7 @@ namespace render
 
 	using Uniform4f = UniformBase<glm::vec4>;
 	template<>
-	inline void Uniform4f::setFromOtherImpl(glm::vec4 const& other) {
+	inline void Uniform4f::setFromOtherImpl(UniformState& uniformState, glm::vec4 const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 
 		glUniform4fv(this->location, 1, &other[0]);
@@ -134,7 +155,7 @@ namespace render
 
 	using Uniform1fv = UniformBase<std::vector<float>>;
 	template<>
-	inline void Uniform1fv::setFromOtherImpl(std::vector<float> const& other) {
+	inline void Uniform1fv::setFromOtherImpl(UniformState& uniformState, std::vector<float> const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 
 		glUniform1fv(this->location, static_cast<GLsizei>(other.size()), other.data());
@@ -142,7 +163,7 @@ namespace render
 
 	using Uniform3fv = UniformBase<std::vector<glm::vec3>>;
 	template<>
-	inline void Uniform3fv::setFromOtherImpl(std::vector<glm::vec3> const& other) {
+	inline void Uniform3fv::setFromOtherImpl(UniformState& uniformState, std::vector<glm::vec3> const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 		assert(!other.empty());
 
@@ -151,20 +172,11 @@ namespace render
 
 	using Uniform4fv = UniformBase<std::vector<glm::vec4>>;
 	template<>
-	inline void Uniform4fv::setFromOtherImpl(std::vector<glm::vec4> const& other) {
+	inline void Uniform4fv::setFromOtherImpl(UniformState& uniformState, std::vector<glm::vec4> const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 		assert(!other.empty());
 
 		glUniform4fv(this->location, static_cast<GLsizei>(other.size()), &other[0][0]);
-	}
-
-	namespace description
-	{
-		struct BufferTexture;
-		struct Texture2D;
-		struct Texture2DArray;
-		struct Texture3D;
-		struct TexturesBound;
 	}
 
 	using UniformBufferTexture = UniformBase<GLuint, description::BufferTexture>;
@@ -173,60 +185,52 @@ namespace render
 	using UniformTexture3D = UniformBase<GLuint, description::Texture3D>;
 
 	template<>
-	inline void UniformBufferTexture::setFromOtherImpl(GLuint const& other) {
+	inline void UniformBufferTexture::setFromOtherImpl(UniformState& uniformState, GLuint const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 
-		auto unit = *LazyGlobal<int, description::TexturesBound>;
+		auto unit = uniformState.getTextureUnit();
 
-		glActiveTexture(GL_TEXTURE0 + *unit);
+		glActiveTexture(GL_TEXTURE0 + unit);
 		glBindTexture(GL_TEXTURE_BUFFER, other);
-		glUniform1i(this->location, *unit);
-
-		(*unit)++;
+		glUniform1i(this->location, unit);
 	}
 
 	template<>
-	inline void UniformTexture2D::setFromOtherImpl(GLuint const& other) {
+	inline void UniformTexture2D::setFromOtherImpl(UniformState& uniformState, GLuint const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 
-		auto unit = *LazyGlobal<int, description::TexturesBound>;
+		auto unit = uniformState.getTextureUnit();
 
-		glActiveTexture(GL_TEXTURE0 + *unit);
+		glActiveTexture(GL_TEXTURE0 + unit);
 		glBindTexture(GL_TEXTURE_2D, other);
-		glUniform1i(this->location, *unit);
-
-		(*unit)++;
+		glUniform1i(this->location, unit);
 	}
 
 	template<>
-	inline void UniformTexture2DArray::setFromOtherImpl(GLuint const& other) {
+	inline void UniformTexture2DArray::setFromOtherImpl(UniformState& uniformState, GLuint const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 
-		auto unit = *LazyGlobal<int, description::TexturesBound>;
+		auto unit = uniformState.getTextureUnit();
 
-		glActiveTexture(GL_TEXTURE0 + *unit);
+		glActiveTexture(GL_TEXTURE0 + unit);
 		glBindTexture(GL_TEXTURE_2D_ARRAY, other);
-		glUniform1i(this->location, *unit);
-
-		(*unit)++;
+		glUniform1i(this->location, unit);
 	}
 
 	template<>
-	inline void UniformTexture3D::setFromOtherImpl(GLuint const& other) {
+	inline void UniformTexture3D::setFromOtherImpl(UniformState& uniformState, GLuint const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 
-		auto unit = *LazyGlobal<int, description::TexturesBound>;
+		auto unit = uniformState.getTextureUnit();
 
-		glActiveTexture(GL_TEXTURE0 + *unit);
+		glActiveTexture(GL_TEXTURE0 + unit);
 		glBindTexture(GL_TEXTURE_3D, other);
-		glUniform1i(this->location, *unit);
-
-		(*unit)++;
+		glUniform1i(this->location, unit);
 	}
 
 	using UniformMatrix4f = UniformBase<glm::mat4>;
 	template<>
-	inline void UniformMatrix4f::setFromOtherImpl(glm::mat4 const& other) {
+	inline void UniformMatrix4f::setFromOtherImpl(UniformState& uniformState, glm::mat4 const& other) {
 		assert(this->program.has_value() && this->program.value().isBound());
 
 		glUniformMatrix4fv(this->location, 1, GL_FALSE, &other[0][0]);
@@ -831,13 +835,12 @@ namespace render
 
 		auto zipped = te::tuple_zip(targetUniforms, storageUniforms);
 
-		auto unit = *LazyGlobal<int, description::TexturesBound>;
-		*unit = 0;
+		UniformState uniformState{};
 
 		te::tuple_for_each(
-		    [](auto& t) {
+		    [&](auto& t) {
 			    auto& [target, storage] = t;
-			    target.setFromOther(storage);
+			    target.setFromOther(uniformState, storage);
 		    },
 		    zipped
 		);

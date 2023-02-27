@@ -17,4 +17,8 @@ namespace render
 			this->openglState.setVAO(0);
 		}
 	}
+
+	int UniformState::getTextureUnit() {
+		return this->textureUnit++;
+	}
 }
