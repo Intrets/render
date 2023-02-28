@@ -19,4 +19,5 @@ namespace render
 	bwo::Texture2D load2DTexture(std::filesystem::path path);
 	bwo::Texture2D load2DTexture(char const* data, size_t size);
 	bwo::Texture2D load2DTexture(std::unique_ptr<Buffer> const& buffer);
+	bwo::Texture2D load2DTexture(Buffer const& buffer);
 }
