@@ -16,6 +16,7 @@ make_module(
 		GLStateWrapper
 		RendererTemplate
 		CachedValue
+		RenderInfoBase
 		loaders/ShaderLoader
 		loaders/TextureLoader
 		loaders/ModelLoader

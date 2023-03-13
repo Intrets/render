@@ -1,10 +1,11 @@
 #pragma once
 
 #include <concepts>
-
-#include "render/RendererTemplate.h"
-
 #include <tepp/angle.h>
+
+#include "render/RenderInfoBase.h"
+
+#include <misc/Misc.h>
 
 namespace render
 {
@@ -30,7 +31,7 @@ namespace render
 		StorageType value{};
 
 		bool* valid = nullptr;
-		render::RenderInfoTemplate<Info>* info = nullptr;
+		render::RenderInfoBase<Info>* info = nullptr;
 
 		int index = 0;
 
@@ -112,7 +113,7 @@ namespace render
 	template<class Info>
 	struct CachedValueInitializer
 	{
-		render::RenderInfoTemplate<Info>& info;
+		render::RenderInfoBase<Info>& info;
 		bool* valid;
 		int index;
 
