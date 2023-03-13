@@ -34,4 +34,7 @@ namespace render
 			return this->data.data();
 		}
 	};
+
+	template<class T>
+	struct RenderInfoTemplate;
 }

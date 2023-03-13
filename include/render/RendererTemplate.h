@@ -529,9 +529,6 @@ namespace render
 		}
 	};
 
-	template<class T>
-	struct RenderInfoTemplate;
-
 	enum RenderMode
 	{
 		TRIANGLE = 1 << 0,
