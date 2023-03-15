@@ -274,6 +274,14 @@ namespace render
 
 		GLuint ID = 0;
 		size_t size = 0;
+		size_t capacity = 0;
+		GLenum location = GL_ARRAY_BUFFER;
+
+		size_t remaining() const {
+			assert(this->capacity >= this->size);
+
+			return this->capacity - this->size;
+		}
 
 		ArrayBuffer() {
 			assert(this->ID == 0);
@@ -285,26 +293,69 @@ namespace render
 			glDeleteBuffers(1, &this->ID);
 		}
 
-		void set(std::vector<T> const& data, BufferUsageHint hint, GLenum location = GL_ARRAY_BUFFER) {
-			this->setRaw(sizeof(T) * data.size(), data.data(), hint, location);
-		};
-
-		void bind(GLenum location) {
-			assert(this->ID != 0);
-			glBindBuffer(location, this->ID);
+		void reset(BufferUsageHint hint) {
+			this->newStorage(this->capacity, hint, this->location);
 		}
 
-		void setRaw(size_t size_, void const* data, BufferUsageHint hint, GLenum location = GL_ARRAY_BUFFER) {
-			if (size_ == 0) {
+		void set(std::vector<T> const& data, BufferUsageHint hint, GLenum location_ = GL_ARRAY_BUFFER) {
+			this->setRaw(sizeof(T) * data.size(), data.data(), hint, location_);
+		};
+
+		void bind() {
+			assert(this->ID != 0);
+			glBindBuffer(this->location, this->ID);
+		}
+
+		void setRaw(size_t byteSize, void const* data, BufferUsageHint hint, GLenum location_ = GL_ARRAY_BUFFER) {
+			if (byteSize == 0) {
 				this->size = 0;
+				this->capacity = this->size;
 				return;
 			}
 
 			assert(this->ID != 0);
-			assert(size_ > 0);
-			this->size = size_ / sizeof(T);
-			glBindBuffer(location, this->ID);
-			glBufferData(location, size_, data, convert(hint));
+			assert(byteSize > 0);
+			assert(byteSize % sizeof(T) == 0);
+			this->size = byteSize / sizeof(T);
+			this->capacity = this->size;
+			this->location = location_;
+			this->bind();
+			glBufferData(this->location, byteSize, data, convert(hint));
+		}
+
+		void expandStorage(std::vector<T> const& data, BufferUsageHint hint, GLenum location_ = GL_ARRAY_BUFFER) {
+			auto newCapacity = std::max(size_t(10), std::max(this->capacity * 2, data.size()));
+			this->newStorage(newCapacity, hint, location_);
+		}
+
+		void newStorage(size_t newCapacity, BufferUsageHint hint, GLenum location_ = GL_ARRAY_BUFFER) {
+			this->location = location_;
+			this->bind();
+			this->size = 0;
+			this->capacity = newCapacity;
+			glBufferData(this->location, this->capacity * sizeof(T), nullptr, convert(hint));
+		}
+
+		bool append(std::vector<T> const& data) {
+			return this->appendRaw(data.size(), data.data());
+		}
+
+		bool appendRaw(size_t appendSize, void const* data) {
+			if (appendSize == 0) {
+				return true;
+			}
+
+			if (this->remaining() >= appendSize) {
+				this->bind();
+				glBufferSubData(this->location, this->size * sizeof(T), appendSize * sizeof(T), data);
+
+				this->size += appendSize;
+
+				return true;
+			}
+			else {
+				return false;
+			}
 		}
 
 		NO_COPY(ArrayBuffer);
@@ -504,17 +555,19 @@ namespace render
 				    state.offset = 0;
 				    state.divisor = buffer.divisor;
 
-				    buffer.bind(GL_ARRAY_BUFFER);
+				    buffer.bind();
 
 				    logger->logInfo("new attribute group\n");
-				    te::for_each_type([&]<class T>(te::Type_t<T>) {
-					    logger->logInfo(
-					        "new attribute {}, size {}, stride {}, offset {}\n", state.index, sizeof(T), state.stride, state.offset
-					    );
+				    te::for_each_type(
+				        [&]<class T>(te::Type_t<T>) {
+					        logger->logInfo(
+					            "new attribute {}, size {}, stride {}, offset {}\n", state.index, sizeof(T), state.stride, state.offset
+					        );
 
-					    applyVertexInfo<T>(state);
-				    },
-				                      te::Type<members>);
+					        applyVertexInfo<T>(state);
+				        },
+				        te::Type<members>
+				    );
 
 				    assert(state.stride == state.offset);
 			    },
@@ -581,6 +634,36 @@ namespace render
 			}
 
 			template<class T>
+			RendererVAO& resetBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
+				constexpr auto enumerated_buffer_types = te::enumerate_in_list(
+				    te::List<typename Buffers::value_type...>
+				);
+
+				constexpr auto same_types = te::filter(
+				    []<template<class...> class L, class S, auto I>(te::Type_t<L<S, te::detail::Value<I>>>) {
+					    return te::Value<std::same_as<T, S>>;
+				    },
+				    enumerated_buffer_types
+				);
+
+				static_assert(Getvalue(te::list_size(same_types)) != 0, "No buffer found with type T");
+				static_assert(Getvalue(te::list_size(same_types)) < 2, "Multiple buffers found with type T");
+
+				constexpr size_t I = std::tuple_element_t<1, std::tuple_element_t<0, Gettype(same_types)>>::value;
+
+				this->resetBuffer<I>(hint);
+
+				return *this;
+			}
+
+			template<size_t I>
+			RendererVAO& resetBuffer(BufferUsageHint hint) {
+				std::get<I>(this->buffers).reset(hint);
+
+				return *this;
+			}
+
+			template<class T>
 			RendererVAO& setBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
 				constexpr auto enumerated_buffer_types = te::enumerate_in_list(
 				    te::List<typename Buffers::value_type...>
@@ -609,6 +692,58 @@ namespace render
 
 				return *this;
 			}
+
+			template<class T>
+			bool appendBuffer(RenderInfoTemplate<T> const& info) {
+				constexpr auto enumerated_buffer_types = te::enumerate_in_list(
+				    te::List<typename Buffers::value_type...>
+				);
+
+				constexpr auto same_types = te::filter(
+				    []<template<class...> class L, class S, auto I>(te::Type_t<L<S, te::detail::Value<I>>>) {
+					    return te::Value<std::same_as<T, S>>;
+				    },
+				    enumerated_buffer_types
+				);
+
+				static_assert(Getvalue(te::list_size(same_types)) != 0, "No buffer found with type T");
+				static_assert(Getvalue(te::list_size(same_types)) < 2, "Multiple buffers found with type T");
+
+				constexpr size_t I = std::tuple_element_t<1, std::tuple_element_t<0, Gettype(same_types)>>::value;
+
+				return this->appendBuffer<I>(info);
+			}
+
+			template<size_t I>
+			bool appendBuffer(RenderInfoTemplate<std::tuple_element_t<I, std::tuple<typename Buffers::value_type...>>> const& info) {
+				return std::get<I>(this->buffers).append(info.data);
+			}
+
+			template<class T>
+			void expandBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
+				constexpr auto enumerated_buffer_types = te::enumerate_in_list(
+				    te::List<typename Buffers::value_type...>
+				);
+
+				constexpr auto same_types = te::filter(
+				    []<template<class...> class L, class S, auto I>(te::Type_t<L<S, te::detail::Value<I>>>) {
+					    return te::Value<std::same_as<T, S>>;
+				    },
+				    enumerated_buffer_types
+				);
+
+				static_assert(Getvalue(te::list_size(same_types)) != 0, "No buffer found with type T");
+				static_assert(Getvalue(te::list_size(same_types)) < 2, "Multiple buffers found with type T");
+
+				constexpr size_t I = std::tuple_element_t<1, std::tuple_element_t<0, Gettype(same_types)>>::value;
+
+				return this->expandBuffer<I>(info, hint);
+			}
+
+			template<size_t I>
+			void expandBuffer(RenderInfoTemplate<std::tuple_element_t<I, std::tuple<typename Buffers::value_type...>>> const& info, BufferUsageHint hint) {
+				return std::get<I>(this->buffers).expandStorage(info.data, hint);
+			}
 		};
 
 		struct RendererProgram
@@ -629,6 +764,16 @@ namespace render
 			    ogs::Configuration const& config,
 			    Uniforms const& uniforms_,
 			    RendererVAO& vao
+			);
+
+			void render(
+			    bwo::FrameBuffer& target,
+			    glm::ivec4 viewport,
+			    ogs::Configuration const& config,
+			    Uniforms const& uniforms_,
+			    RendererVAO& vao,
+			    size_t begin,
+			    size_t end
 			);
 
 			void setUniforms(Uniforms const& uniforms_);
@@ -711,29 +856,31 @@ namespace render
 		{
 			std::optional<int> maybeElementCount;
 
-			te::tuple_for_each([&](auto& buffer) {
-				if constexpr (buffer.divisor == 0) {
-					if (maybeElementCount.has_value()) {
-						assert(maybeElementCount.value() == buffer.size);
-					}
-					else {
-						maybeElementCount = static_cast<int>(buffer.size);
-					}
-				}
-				else {
-					auto bufferSize = static_cast<int>(buffer.size);
+			te::tuple_for_each(
+			    [&](auto& buffer) {
+				    if constexpr (buffer.divisor == 0) {
+					    if (maybeElementCount.has_value()) {
+						    assert(maybeElementCount.value() == buffer.size);
+					    }
+					    else {
+						    maybeElementCount = static_cast<int>(buffer.size);
+					    }
+				    }
+				    else {
+					    auto bufferSize = static_cast<int>(buffer.size);
 
-					if (!instanceCount.has_value()) {
-						instanceCount = bufferSize;
-					}
-					else if (instanceCount.value() != bufferSize) {
-						logger->logError("Buffer size mis-match when rendering program {}. Sizes {} and {}. Continuing with smallest.\n", this->program.getDescription(), instanceCount.value(), bufferSize);
+					    if (!instanceCount.has_value()) {
+						    instanceCount = bufferSize;
+					    }
+					    else if (instanceCount.value() != bufferSize) {
+						    logger->logError("Buffer size mis-match when rendering program {}. Sizes {} and {}. Continuing with smallest.\n", this->program.getDescription(), instanceCount.value(), bufferSize);
 
-						instanceCount = std::min(instanceCount.value(), bufferSize);
-					}
-				}
-			},
-			                   vao.buffers);
+						    instanceCount = std::min(instanceCount.value(), bufferSize);
+					    }
+				    }
+			    },
+			    vao.buffers
+			);
 
 			if (!maybeElementCount.has_value()) {
 				logger->logError("Missing element buffer to determine amount of elements to draw in program {}. Skipping render.\n", this->program.getDescription());
@@ -792,6 +939,62 @@ namespace render
 			    all_render_modes
 			);
 		}
+	}
+
+	template<class Uniforms, int mode, class... Buffers>
+	inline void Renderer2<Uniforms, mode, Buffers...>::RendererProgram::render(
+	    bwo::FrameBuffer& target,
+	    glm::ivec4 viewport,
+	    ogs::Configuration const& config,
+	    Uniforms const& uniforms_,
+	    RendererVAO& vao,
+	    size_t begin,
+	    size_t end
+	) {
+		this->program.openglState.setConfiguration(config);
+
+		auto useVAO = vao.bind();
+		auto useProgram = this->program.bind();
+
+		this->setUniforms(uniforms_);
+
+		int elementCount;
+		{
+			std::optional<int> maybeElementCount;
+
+			te::tuple_for_each(
+			    [&](auto& buffer) {
+				    if constexpr (buffer.divisor == 0) {
+					    if (maybeElementCount.has_value()) {
+						    assert(maybeElementCount.value() == buffer.size);
+					    }
+					    else {
+						    maybeElementCount = static_cast<int>(buffer.size);
+					    }
+				    }
+			    },
+			    vao.buffers
+			);
+
+			if (!maybeElementCount.has_value()) {
+				logger->logError("Missing element buffer to determine amount of elements to draw in program {}. Skipping render.\n", this->program.getDescription());
+				return;
+			}
+			elementCount = maybeElementCount.value();
+		}
+
+		target.draw(
+		    viewport,
+		    [=] {
+			    glDrawArraysInstancedBaseInstance(
+			        GL_TRIANGLES,
+			        0,
+			        static_cast<GLsizei>(elementCount),
+			        static_cast<GLsizei>(end - begin),
+			        static_cast<GLsizei>(begin)
+			    );
+		    }
+		);
 	}
 
 	template<class Uniforms, int mode, class... Buffers>
