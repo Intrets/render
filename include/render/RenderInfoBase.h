@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <span>
+#include <vector>
 
 namespace render
 {
@@ -28,6 +28,10 @@ namespace render
 
 		size_t getSize() const {
 			return this->data.size();
+		}
+
+		size_t getByteSize() const {
+			return this->data.size() * sizeof(T);
 		}
 
 		T* getData() const {
