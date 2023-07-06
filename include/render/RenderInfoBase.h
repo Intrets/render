@@ -3,6 +3,8 @@
 #include <vector>
 #include <span>
 
+#include <cassert>
+
 namespace render
 {
 	template<class T>
