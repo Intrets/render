@@ -65,6 +65,9 @@ namespace ogs
 				case BLEND_FUNC::SRC_ONE__ONE_MINUS_SRC_ALPHA:
 					glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 					break;
+				case BLEND_FUNC::SEPERATE____GL_SRC_ALPHA__GL_ONE_MINUS_SRC_ALPHA___GL_ONE_MINUS_DST_ALPHA__GL_ONE:
+					glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_ONE);
+					break;
 				case BLEND_FUNC::ONE__ZERO:
 					glBlendFunc(GL_ONE, GL_ZERO);
 					break;
