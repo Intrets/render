@@ -631,6 +631,16 @@ namespace render
 			    RendererVAO& vao
 			);
 
+			void render(
+			    bwo::FrameBuffer& target,
+			    glm::ivec4 viewport,
+			    ogs::Configuration const& config,
+			    Uniforms const& uniforms_,
+			    RendererVAO& vao,
+			    size_t start,
+			    size_t end
+			);
+
 			void setUniforms(Uniforms const& uniforms_);
 		};
 	};
@@ -792,6 +802,74 @@ namespace render
 			    all_render_modes
 			);
 		}
+	}
+
+	template<class Uniforms, int mode, class... Buffers>
+	inline void Renderer2<Uniforms, mode, Buffers...>::RendererProgram::render(
+	    bwo::FrameBuffer& target,
+	    glm::ivec4 viewport,
+	    ogs::Configuration const& config,
+	    Uniforms const& uniforms_,
+	    RendererVAO& vao,
+	    size_t start,
+	    size_t end
+	) {
+		// Find instance and element count
+		int elementCount;
+		{
+			std::optional<int> maybeElementCount;
+
+			te::tuple_for_each(
+			    [&](auto& buffer) {
+				    if constexpr (buffer.divisor == 0) {
+					    if (maybeElementCount.has_value()) {
+						    assert(maybeElementCount.value() == buffer.size);
+					    }
+					    else {
+						    maybeElementCount = static_cast<int>(buffer.size);
+					    }
+				    }
+			    },
+			    vao.buffers
+			);
+
+			if (!maybeElementCount.has_value()) {
+				logger->logError("Missing element buffer to determine amount of elements to draw in program {}. Skipping render.\n", this->program.getDescription());
+				return;
+			}
+			elementCount = maybeElementCount.value();
+		}
+
+		if (elementCount == 0) {
+			return;
+		}
+
+		this->program.openglState.setConfiguration(config);
+
+		auto useVAO = vao.bind();
+		auto useProgram = this->program.bind();
+
+		this->setUniforms(uniforms_);
+
+		te::for_each_type(
+		    [&]<auto m>(te::Value_t<m>) {
+			    if constexpr ((mode & m) == m) {
+				    target.draw(
+				        viewport,
+				        [&] {
+					        glDrawArraysInstancedBaseInstance(
+					            getRenderMode(m),
+					            0,
+					            static_cast<GLsizei>(elementCount),
+					            static_cast<GLsizei>(end - start),
+					            static_cast<GLsizei>(start)
+					        );
+				        }
+				    );
+			    }
+		    },
+		    all_render_modes
+		);
 	}
 
 	template<class Uniforms, int mode, class... Buffers>
