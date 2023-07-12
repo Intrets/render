@@ -30,7 +30,8 @@ namespace render
 
 		StorageType value{};
 
-		bool* valid = nullptr;
+		inline static bool dummyValue = false;
+		bool* valid = &dummyValue;
 		render::RenderInfoBase<Info>* info = nullptr;
 
 		int index = 0;
@@ -82,11 +83,11 @@ namespace render
 		DEFAULT_COPY_MOVE(CachedValue);
 
 		bool isValid() const {
-			return this->valid != nullptr && *this->valid;
+			return *this->valid;
 		}
 
 		void send() {
-			if (this->valid && *this->valid) {
+			if (this->isValid()) {
 				if constexpr (std::same_as<te::angle<float>, StorageType>) {
 					this->info->data[this->index].*ptr = this->value.get();
 				}
@@ -97,7 +98,7 @@ namespace render
 		}
 
 		void send(StorageType s) {
-			if (this->valid && *this->valid && this->value != s) {
+			if (this->value != s && this->isValid()) {
 				if constexpr (std::same_as<te::angle<float>, StorageType>) {
 					this->info->data[this->index].*ptr = s.get();
 				}
