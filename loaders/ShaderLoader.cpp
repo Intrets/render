@@ -43,7 +43,7 @@ namespace render
 		if (InfoLogLength > 0) {
 			std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
 			glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
-			logger->logError("Vertex shader error: {}", &VertexShaderErrorMessage[0]);
+			logger->logError("Vertex shader error: {}\n", &VertexShaderErrorMessage[0]);
 		}
 
 		// Compile Fragment Shader
@@ -56,7 +56,7 @@ namespace render
 		if (InfoLogLength > 0) {
 			std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
 			glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
-			logger->logError("Fragment shader error: {}", &FragmentShaderErrorMessage[0]);
+			logger->logError("Fragment shader error: {}\n", &FragmentShaderErrorMessage[0]);
 		}
 
 		// Link the program
@@ -72,7 +72,7 @@ namespace render
 		if (InfoLogLength > 0) {
 			std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
 			glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-			logger->logError("Program error: {}", &ProgramErrorMessage[0]);
+			logger->logError("Program error: {}\n", &ProgramErrorMessage[0]);
 		}
 
 		glDetachShader(ProgramID, VertexShaderID);
