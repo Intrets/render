@@ -649,6 +649,9 @@ namespace render
 	using TriRenderer = Renderer2<Uniforms, RenderMode::TRIANGLE, Buffers...>;
 
 	template<class Uniforms, class... Buffers>
+	using TriStripRenderer = Renderer2<Uniforms, RenderMode::TRIANGLESTRIP, Buffers...>;
+
+	template<class Uniforms, class... Buffers>
 	using PointRenderer = Renderer2<Uniforms, RenderMode::POINT, Buffers...>;
 
 	template<class Uniforms, class... Buffers>
