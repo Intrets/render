@@ -438,7 +438,7 @@ namespace render
 				    state.index,
 				    static_cast<GLint>(size),
 				    GL_SHORT,
-					state.stride,
+				    state.stride,
 				    (void*)state.offset
 				);
 
@@ -756,29 +756,31 @@ namespace render
 		{
 			std::optional<int> maybeElementCount;
 
-			te::tuple_for_each([&](auto& buffer) {
-				if constexpr (buffer.divisor == 0) {
-					if (maybeElementCount.has_value()) {
-						assert(maybeElementCount.value() == buffer.size);
-					}
-					else {
-						maybeElementCount = static_cast<int>(buffer.size);
-					}
-				}
-				else {
-					auto bufferSize = static_cast<int>(buffer.size);
+			te::tuple_for_each(
+			    [&](auto& buffer) {
+				    if constexpr (buffer.divisor == 0) {
+					    if (maybeElementCount.has_value()) {
+						    assert(maybeElementCount.value() == buffer.size);
+					    }
+					    else {
+						    maybeElementCount = static_cast<int>(buffer.size);
+					    }
+				    }
+				    else {
+					    auto bufferSize = static_cast<int>(buffer.size);
 
-					if (!instanceCount.has_value()) {
-						instanceCount = bufferSize;
-					}
-					else if (instanceCount.value() != bufferSize) {
-						logger->logError("Buffer size mis-match when rendering program {}. Sizes {} and {}. Continuing with smallest.\n", this->program.getDescription(), instanceCount.value(), bufferSize);
+					    if (!instanceCount.has_value()) {
+						    instanceCount = bufferSize;
+					    }
+					    else if (instanceCount.value() != bufferSize) {
+						    logger->logError("Buffer size mis-match when rendering program {}. Sizes {} and {}. Continuing with smallest.\n", this->program.getDescription(), instanceCount.value(), bufferSize);
 
-						instanceCount = std::min(instanceCount.value(), bufferSize);
-					}
-				}
-			},
-			                   vao.buffers);
+						    instanceCount = std::min(instanceCount.value(), bufferSize);
+					    }
+				    }
+			    },
+			    vao.buffers
+			);
 
 			if (!maybeElementCount.has_value()) {
 				logger->logError("Missing element buffer to determine amount of elements to draw in program {}. Skipping render.\n", this->program.getDescription());
@@ -849,7 +851,7 @@ namespace render
 	    size_t start,
 	    size_t end
 	) {
-		// Find instance and element count
+		std::optional<int> instanceCount;
 		int elementCount;
 		{
 			std::optional<int> maybeElementCount;
@@ -864,6 +866,18 @@ namespace render
 						    maybeElementCount = static_cast<int>(buffer.size);
 					    }
 				    }
+				    else {
+					    auto bufferSize = static_cast<int>(buffer.size);
+
+					    if (!instanceCount.has_value()) {
+						    instanceCount = bufferSize;
+					    }
+					    else if (instanceCount.value() != bufferSize) {
+						    logger->logError("Buffer size mis-match when rendering program {}. Sizes {} and {}. Continuing with smallest.\n", this->program.getDescription(), instanceCount.value(), bufferSize);
+
+						    instanceCount = std::min(instanceCount.value(), bufferSize);
+					    }
+				    }
 			    },
 			    vao.buffers
 			);
@@ -875,7 +889,7 @@ namespace render
 			elementCount = maybeElementCount.value();
 		}
 
-		if (elementCount == 0) {
+		if (elementCount == 0 || (instanceCount.has_value() && instanceCount.value() == 0)) {
 			return;
 		}
 
@@ -886,25 +900,46 @@ namespace render
 
 		this->setUniforms(uniforms_);
 
-		te::for_each_type(
-		    [&]<auto m>(te::Value_t<m>) {
-			    if constexpr ((mode & m) == m) {
-				    target.draw(
-				        viewport,
-				        [&] {
-					        glDrawArraysInstancedBaseInstance(
-					            getRenderMode(m),
-					            0,
-					            static_cast<GLsizei>(elementCount),
-					            static_cast<GLsizei>(end - start),
-					            static_cast<GLsizei>(start)
-					        );
-				        }
-				    );
-			    }
-		    },
-		    all_render_modes
-		);
+		if (!instanceCount.has_value()) {
+			te::for_each_type(
+			    [&]<auto m>(te::Value_t<m>) {
+				    if constexpr ((mode & m) == m) {
+					    target.draw(
+					        viewport,
+					        [&] {
+						        glDrawArrays(
+						            getRenderMode(m),
+						            static_cast<GLsizei>(start),
+						            static_cast<GLsizei>(end - start)
+						        );
+					        }
+					    );
+				    }
+			    },
+			    all_render_modes
+			);
+		}
+		else {
+			te::for_each_type(
+			    [&]<auto m>(te::Value_t<m>) {
+				    if constexpr ((mode & m) == m) {
+					    target.draw(
+					        viewport,
+					        [&] {
+						        glDrawArraysInstancedBaseInstance(
+						            getRenderMode(m),
+						            0,
+						            static_cast<GLsizei>(elementCount),
+						            static_cast<GLsizei>(end - start),
+						            static_cast<GLsizei>(start)
+						        );
+					        }
+					    );
+				    }
+			    },
+			    all_render_modes
+			);
+		}
 	}
 
 	template<class Uniforms, int mode, class... Buffers>
