@@ -429,6 +429,26 @@ namespace render
 				}
 			}
 		};
+
+		template<size_t size>
+		struct applyVertexInfo<int16_t, size>
+		{
+			static void run(VertexInfoState& state) {
+				glVertexAttribIPointer(
+				    state.index,
+				    static_cast<GLint>(size),
+				    GL_SHORT,
+					state.stride,
+				    (void*)state.offset
+				);
+
+				glVertexAttribDivisor(state.index, state.divisor);
+				glEnableVertexAttribArray(state.index);
+
+				state.index++;
+				state.offset += sizeof(int16_t) * size;
+			}
+		};
 	}
 
 	template<class T>
@@ -456,6 +476,18 @@ namespace render
 		}
 		else if constexpr (std::same_as<T, glm::mat4>) {
 			detail::applyVertexInfo<glm::mat4, 1>::run(state);
+		}
+		else if constexpr (std::same_as<T, int16_t>) {
+			detail::applyVertexInfo<int16_t, 1>::run(state);
+		}
+		else if constexpr (std::same_as<T, std::array<int16_t, 2>>) {
+			detail::applyVertexInfo<int16_t, 2>::run(state);
+		}
+		else if constexpr (std::same_as<T, std::array<int16_t, 3>>) {
+			detail::applyVertexInfo<int16_t, 3>::run(state);
+		}
+		else if constexpr (std::same_as<T, std::array<int16_t, 4>>) {
+			detail::applyVertexInfo<int16_t, 4>::run(state);
 		}
 		else {
 			assert(0);
