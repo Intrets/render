@@ -119,6 +119,8 @@ namespace render
 
 	static constexpr Color gray_translucent = converter(rgba(0, 0, 0, 100));
 
+	static constexpr Color max_signal_color = rgb(0, 115, 247);
+
 	static constexpr std::array<Color, 5> nice_colors = {
 		nice_blue,
 		nice_darkblue,
