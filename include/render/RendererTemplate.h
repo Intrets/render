@@ -615,7 +615,7 @@ namespace render
 			template<class T>
 			RendererVAO& setBuffer(RenderInfoTemplate<T> const& info, BufferUsageHint hint) {
 				constexpr auto enumerated_buffer_types = te::enumerate_in_list(
-				    te::List<typename Buffers::value_type...>
+				    te::Type<std::tuple<typename Buffers::value_type...>>
 				);
 
 				constexpr auto same_types = te::filter(
@@ -628,7 +628,7 @@ namespace render
 				static_assert(Getvalue(te::list_size(same_types)) != 0, "No buffer found with type T");
 				static_assert(Getvalue(te::list_size(same_types)) < 2, "Multiple buffers found with type T");
 
-				constexpr size_t I = std::tuple_element_t<1, std::tuple_element_t<0, Gettype(same_types)>>::value;
+				constexpr size_t I = te::list_element_t<1, te::list_element_t<0, Gettype(same_types)>>::value;
 
 				this->setBuffer<I>(info, hint);
 
@@ -636,7 +636,7 @@ namespace render
 			}
 
 			template<size_t I>
-			RendererVAO& setBuffer(RenderInfoTemplate<std::tuple_element_t<I, std::tuple<typename Buffers::value_type...>>> const& info, BufferUsageHint hint) {
+			RendererVAO& setBuffer(RenderInfoTemplate<te::list_element_t<I, te::list_type<typename Buffers::value_type...>>> const& info, BufferUsageHint hint) {
 				std::get<I>(this->buffers).set(info.data, hint);
 
 				return *this;

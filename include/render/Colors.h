@@ -112,6 +112,8 @@ namespace render
 	static constexpr Color gray_blue = converter({ 0xFF804040 });
 	static constexpr Color selection_color = converter(rgb(100, 255, 255));
 	static constexpr Color shadow_color = converter(rgba(0, 0, 0, 150));
+	static constexpr Color background_color = converter(rgba(0, 0, 0, 50));
+	static constexpr Color invert_shadow_color = converter(rgba(255, 255, 255, 20));
 	static constexpr Color transparent_dark = converter(rgba(0, 0, 0, 230));
 
 	static constexpr Color dial_border_gray = converter(rgb(188, 188, 188));
